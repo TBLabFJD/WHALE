@@ -37,7 +37,9 @@ workflow VARIANTPIPELINE {
     ch_versions = Channel.empty()
     ch_multiqc_files = Channel.empty()
 
-    if (params.step == 'mapping') {
+    
+
+ /*    if (params.step == 'mapping') {
         FASTQC (
             samplesheet
         )
@@ -147,7 +149,7 @@ workflow VARIANTPIPELINE {
             )
         }
     }
-
+ */
     //
     // Collate and save software versions
     //
