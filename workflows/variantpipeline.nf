@@ -17,6 +17,9 @@ include { MERGE_SNV_CALLING      } from '../subworkflows/local/merge_snv_calling
 include { MERGE_SV_CALLING       } from '../subworkflows/local/merge_sv_calling'
 include { SNV_ANNOTATION         } from '../subworkflows/local/snv_annotation'
 include { SV_ANNOTATION          } from '../subworkflows/local/sv_annotation'
+include { DORADO_BASECALLER      } from '../modules/local/dorado'
+include { SAMTOOLS_SORT          } from '../modules/nf-core/samtools/sort'
+include { SAMTOOLS_MERGE         } from '../modules/nf-core/samtools/merge'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -36,8 +39,17 @@ workflow VARIANTPIPELINE {
 
     ch_versions = Channel.empty()
     ch_multiqc_files = Channel.empty()
-
-    
+    samplesheet.view()
+    DORADO_BASECALLER( samplesheet, fasta, fasta_fai )
+    SAMTOOLS_SORT( DORADO_BASECALLER.out.bam_out, fasta, 'bai' )
+    SAMTOOLS_MERGE( 
+    SAMTOOLS_SORT.out.bam
+        .map { meta, bam -> bam } // we take only the bam path
+        .collect()
+        .map { bams -> [ [id:'all_samples'], bams ] },
+    fasta, 
+    fasta_fai 
+    )
 
  /*    if (params.step == 'mapping') {
         FASTQC (

@@ -47,6 +47,13 @@
                 "exists": true,
                 "pattern": "^\\S+\\.bed$",
                 "errorMessage": "BED file cannot contain spaces and must have extension '.bed'"
+            },
+            "pod5": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.pod5$",
+                "errorMessage": "POD5 file cannot contain spaces and must have extension '.pod5'"
             }
         },
         "required": ["sample"]

@@ -83,7 +83,7 @@ workflow PIPELINE_INITIALISATION {
     Channel
         .fromSamplesheet("input")
         .map {
-            meta, fastq, bam, bai, vcf, bed ->
+            meta, fastq, bam, bai, vcf, bed, pod5 ->
                 if (fastq) {
                     return [ meta + [ data_type:'fastq' ], fastq ]
                 } else if (bam) {
@@ -92,6 +92,8 @@ workflow PIPELINE_INITIALISATION {
                     return [ meta + [ data_type:'vcf' ], vcf ]
                 } else if (bed) {
                     return [ meta + [ data_type:'bed' ], bed ]
+                } else if (pod5) {
+                    return [ meta + [ data_type:'pod5' ], pod5 ]
                 }
         }
         //.groupTuple().view()
