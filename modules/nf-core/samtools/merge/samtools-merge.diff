@@ -1,0 +1,19 @@
+Changes in component 'nf-core/samtools/merge'
+'modules/nf-core/samtools/merge/environment.yml' is unchanged
+Changes in 'samtools/merge/main.nf':
+--- modules/nf-core/samtools/merge/main.nf
++++ modules/nf-core/samtools/merge/main.nf
+@@ -14,6 +14,7 @@
+     output:
+     tuple val(meta), path("${prefix}.bam") , optional:true, emit: bam
+     tuple val(meta), path("${prefix}.cram"), optional:true, emit: cram
++    tuple val(meta), path("*.bai")         , optional:true, emit: bai
+     tuple val(meta), path("*.csi")         , optional:true, emit: csi
+     tuple val(meta), path("*.crai")        , optional:true, emit: crai
+     tuple val("${task.process}"), val('samtools'), eval("samtools version | sed '1!d;s/.* //'"), topic: versions, emit: versions_samtools
+
+'modules/nf-core/samtools/merge/meta.yml' is unchanged
+'modules/nf-core/samtools/merge/tests/main.nf.test' is unchanged
+'modules/nf-core/samtools/merge/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/samtools/merge/tests/nextflow.config' is unchanged
+************************************************************

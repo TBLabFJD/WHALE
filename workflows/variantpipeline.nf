@@ -39,19 +39,23 @@ workflow VARIANTPIPELINE {
 
     ch_versions = Channel.empty()
     ch_multiqc_files = Channel.empty()
-    samplesheet.view()
+/*     samplesheet.view()
     DORADO_BASECALLER( samplesheet, fasta, fasta_fai )
-    SAMTOOLS_SORT( DORADO_BASECALLER.out.bam_out, fasta, 'bai' )
-    SAMTOOLS_MERGE( 
-    SAMTOOLS_SORT.out.bam
-        .map { meta, bam -> bam } // we take only the bam path
-        .collect()
-        .map { bams -> [ [id:'all_samples'], bams ] },
-    fasta, 
-    fasta_fai 
-    )
+    SAMTOOLS_SORT( DORADO_BASECALLER.out.bam_out, fasta, "bai" )
 
- /*    if (params.step == 'mapping') {
+    ch_bams_for_merge = SAMTOOLS_SORT.out.bam
+        .map { meta, bam -> bam } 
+        .collect()
+        .map { bams -> [ [id:'all_samples'], bams ] }
+
+    ch_reference = [ [id:'genome'], fasta, fasta_fai, fasta_gzi ]
+
+    SAMTOOLS_MERGE (
+        ch_bams_for_merge,
+        ch_reference
+    ) */
+
+    if (params.step == 'mapping') {
         FASTQC (
             samplesheet
         )
@@ -67,6 +71,25 @@ workflow VARIANTPIPELINE {
             false)
     
         bam_bai = MINIMAP2_ALIGN.out.bam.join(MINIMAP2_ALIGN.out.index) // channel: [ val(meta), path(bam), path(bai) ]
+    }
+    else if (params.step == 'basecalling') {
+        DORADO_BASECALLER( samplesheet, fasta, fasta_fai )
+        SAMTOOLS_SORT( DORADO_BASECALLER.out.bam_out, fasta, "bai" )
+
+        ch_bams_for_merge = SAMTOOLS_SORT.out.bam
+            .map { meta, bam -> bam } 
+            .collect()
+            .map { bams -> [ [id:'all_samples'], bams ] }
+
+        ch_reference = [ [id:'genome'], fasta, fasta_fai, fasta_gzi ]
+
+        SAMTOOLS_MERGE (
+            ch_bams_for_merge,
+            ch_reference
+        )
+
+        bam_bai = SAMTOOLS_MERGE.out.bam.join(SAMTOOLS_MERGE.out.bai)
+        bam_bai.view()
     }
     else if (params.step == 'variant_calling') {
         bam_bai = samplesheet
@@ -161,7 +184,7 @@ workflow VARIANTPIPELINE {
             )
         }
     }
- */
+
     //
     // Collate and save software versions
     //
