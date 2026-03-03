@@ -20,6 +20,8 @@ include { SV_ANNOTATION          } from '../subworkflows/local/sv_annotation'
 include { DORADO_BASECALLER      } from '../modules/local/dorado'
 include { SAMTOOLS_SORT          } from '../modules/nf-core/samtools/sort'
 include { SAMTOOLS_MERGE         } from '../modules/nf-core/samtools/merge'
+include { SAMTOOLS_INDEX         } from '../modules/nf-core/samtools/index'
+include { MODKIT_PILEUP          } from '../modules/nf-core/modkit/pileup'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -73,22 +75,34 @@ workflow VARIANTPIPELINE {
         bam_bai = MINIMAP2_ALIGN.out.bam.join(MINIMAP2_ALIGN.out.index) // channel: [ val(meta), path(bam), path(bai) ]
     }
     else if (params.step == 'basecalling') {
-        DORADO_BASECALLER( samplesheet, fasta, fasta_fai )
-        SAMTOOLS_SORT( DORADO_BASECALLER.out.bam_out, fasta, "bai" )
+        samplesheet.view()
+        fasta.view()
+        fasta_fai.view()
+        DORADO_BASECALLER ( samplesheet, fasta, fasta_fai )
+        samplesheet.view()
+        SAMTOOLS_SORT ( DORADO_BASECALLER.out.bam_out, fasta, "bai" )
 
         ch_bams_for_merge = SAMTOOLS_SORT.out.bam
             .map { meta, bam -> bam } 
             .collect()
             .map { bams -> [ [id:'all_samples'], bams ] }
 
-        ch_reference = [ [id:'genome'], fasta, fasta_fai, fasta_gzi ]
+        // ch_reference = [ [id:'genome'], fasta, fasta_fai, fasta_gzi ] mal, fasta, fasta_fai y fasta_gzi son canales no paths
+        ch_reference = fasta.map { meta, file -> file }
+            .combine( fasta_fai.map { meta, file -> file } )
+            .combine( fasta_gzi.map { meta, file -> file } )
+            .map { fa, fai, gzi -> [ [id:'genome'], fa, fai, gzi ] }
 
         SAMTOOLS_MERGE (
             ch_bams_for_merge,
             ch_reference
         )
 
-        bam_bai = SAMTOOLS_MERGE.out.bam.join(SAMTOOLS_MERGE.out.bai)
+        SAMTOOLS_INDEX ( SAMTOOLS_MERGE.out.bam )
+
+        bam_bai = SAMTOOLS_MERGE.out.bam.join(SAMTOOLS_INDEX.out.bai)
+        bam_bai.view()
+
         bam_bai.view()
     }
     else if (params.step == 'variant_calling') {
@@ -101,11 +115,14 @@ workflow VARIANTPIPELINE {
         merged_final_bed = samplesheet
     }
 
+    // MODKIT_PILEUP( bam_bai, ch_reference, [] )
+
+
     //
     // SUBWORKFLOW: Run Deepvariant, Clair3 & NanoCaller
     //
 
-    if (params.snv_calling == true) {
+ /*    if (params.snv_calling == true) {
         SNV_CALLING (
             bam_bai,
             fasta,
@@ -183,7 +200,7 @@ workflow VARIANTPIPELINE {
                 merged_final_bed
             )
         }
-    }
+    } */
 
     //
     // Collate and save software versions

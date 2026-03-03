@@ -1,6 +1,6 @@
 process DORADO_BASECALLER {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_high'
 
     container "docker.io/ontresearch/dorado"
 
@@ -18,8 +18,8 @@ process DORADO_BASECALLER {
     script:
     //def emit_args = (params.dorado_modification == null) ? " --emit-fastq > basecall.fastq && gzip basecall.fastq" : " --modified-bases $params.dorado_modification > basecall.bam"
     """
-    dorado download --model dna_r10.4.1_e8.2_400bps_sup@v5.2.0_5mCG_5hmCG@v2
-    dorado basecaller hac $pod5_path --device cpu --modified-bases 5mCG_5hmCG --references $fasta_path > ${meta.id}_basecall.bam
+    dorado download --model dna_r10.4.1_e8.2_400bps_hac@v5.2.0_5mCG_5hmCG@v2
+    dorado basecaller hac $pod5_path --device cpu --modified-bases 5mCG_5hmCG --reference $fasta_path > ${meta.id}_basecall.bam
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

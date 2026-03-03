@@ -17,7 +17,7 @@ nextflow.enable.dsl = 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { VARIANTPIPELINE         } from './workflows/variantpipeline'
+include { VARIANTPIPELINE  } from './workflows/variantpipeline'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_variantpipeline_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_variantpipeline_pipeline'
 
@@ -29,10 +29,20 @@ include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_vari
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// Rescatamos los valores de igenomes.config automáticamente si se pasa --genome
-params.fasta     = getGenomeAttribute('fasta')
-params.fasta_fai = getGenomeAttribute('fasta_fai')
-params.fasta_gzi = getGenomeAttribute('fasta_gzi')
+// TODO nf-core: Remove this line if you don't need a FASTA file
+//   This is an example of how to use getGenomeAttribute() to fetch parameters
+//   from igenomes.config using `--genome`
+// params.fasta = getGenomeAttribute('fasta')
+// params.fasta_fai = getGenomeAttribute('fasta_fai')
+
+// Initialize fasta file with meta map: from sarek/main.nf
+fasta = params.fasta ? Channel.fromPath(params.fasta).map{ it -> [ [id:it.baseName], it ] }.collect() : Channel.empty()
+
+// Initialize fasta_fai file with meta map:
+fasta_fai = params.fasta_fai ? Channel.fromPath(params.fasta_fai).map{ it -> [ [id:it.baseName], it ] }.collect() : Channel.empty()
+
+// Initialize fasta_gzi file with meta map:
+fasta_gzi = params.fasta_gzi ? Channel.fromPath(params.fasta_gzi).map{ it -> [ [id:it.baseName], it ] }.collect() : Channel.empty()
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,7 +77,6 @@ workflow NFCORE_VARIANTPIPELINE {
     multiqc_report = VARIANTPIPELINE.out.multiqc_report // channel: /path/to/multiqc_report.html
 
 }
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -77,13 +86,6 @@ workflow NFCORE_VARIANTPIPELINE {
 workflow {
 
     main:
-
-    //
-
-    //
-    def ch_fasta     = params.fasta     ? Channel.fromPath(params.fasta).map{ it -> [ [id:it.baseName], it ] }.collect() : Channel.empty()
-    def ch_fasta_fai = params.fasta_fai ? Channel.fromPath(params.fasta_fai).map{ it -> [ [id:it.baseName], it ] }.collect() : Channel.empty()
-    def ch_fasta_gzi = params.fasta_gzi ? Channel.fromPath(params.fasta_gzi).map{ it -> [ [id:it.baseName], it ] }.collect() : Channel.empty()
 
     //
     // SUBWORKFLOW: Run initialisation tasks
@@ -103,9 +105,9 @@ workflow {
     //
     NFCORE_VARIANTPIPELINE (
         PIPELINE_INITIALISATION.out.samplesheet,
-        ch_fasta,
-        ch_fasta_fai,
-        ch_fasta_gzi
+        fasta,
+        fasta_fai,
+        fasta_gzi
     )
 
     //
