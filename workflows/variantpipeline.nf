@@ -4,24 +4,28 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { FASTQC                 } from '../modules/nf-core/fastqc/main'
-include { MULTIQC                } from '../modules/nf-core/multiqc/main'
-include { MINIMAP2_ALIGN         } from '../modules/nf-core/minimap2/align/main'
-include { paramsSummaryMap       } from 'plugin/nf-validation'
-include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_variantpipeline_pipeline'
-include { SNV_CALLING            } from '../subworkflows/local/snv_calling'
-include { SV_CALLING             } from '../subworkflows/local/sv_calling'
-include { MERGE_SNV_CALLING      } from '../subworkflows/local/merge_snv_calling'
-include { MERGE_SV_CALLING       } from '../subworkflows/local/merge_sv_calling'
-include { SNV_ANNOTATION         } from '../subworkflows/local/snv_annotation'
-include { SV_ANNOTATION          } from '../subworkflows/local/sv_annotation'
-include { DORADO_BASECALLER      } from '../modules/local/dorado'
-include { SAMTOOLS_SORT          } from '../modules/nf-core/samtools/sort'
-include { SAMTOOLS_MERGE         } from '../modules/nf-core/samtools/merge'
-include { SAMTOOLS_INDEX         } from '../modules/nf-core/samtools/index'
-include { MODKIT_PILEUP          } from '../modules/nf-core/modkit/pileup'
+include { FASTQC                   } from '../modules/nf-core/fastqc/main'
+include { MULTIQC                  } from '../modules/nf-core/multiqc/main'
+include { MINIMAP2_ALIGN           } from '../modules/nf-core/minimap2/align/main'
+include { paramsSummaryMap         } from 'plugin/nf-validation'
+include { paramsSummaryMultiqc     } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { softwareVersionsToYAML   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { methodsDescriptionText   } from '../subworkflows/local/utils_nfcore_variantpipeline_pipeline'
+include { SNV_CALLING              } from '../subworkflows/local/snv_calling'
+include { SV_CALLING               } from '../subworkflows/local/sv_calling'
+include { MERGE_SNV_CALLING        } from '../subworkflows/local/merge_snv_calling'
+include { MERGE_SV_CALLING         } from '../subworkflows/local/merge_sv_calling'
+include { SNV_ANNOTATION           } from '../subworkflows/local/snv_annotation'
+include { SV_ANNOTATION            } from '../subworkflows/local/sv_annotation'
+include { DORADO_BASECALLER        } from '../modules/local/dorado/basecaller'
+include { DORADO_DOWNLOAD          } from '../modules/local/dorado/download'
+include { SAMTOOLS_SORT            } from '../modules/nf-core/samtools/sort'
+include { SAMTOOLS_MERGE           } from '../modules/nf-core/samtools/merge'
+include { SAMTOOLS_INDEX           } from '../modules/nf-core/samtools/index'
+include { MODKIT_PILEUP            } from '../modules/nf-core/modkit/pileup'
+include { BEDMETHYL_TO_BEDGRAPH    } from '../modules/local/bedmethyltobedgraph'
+include { UCSC_BEDGRAPHTOBIGWIG    } from '../modules/nf-core/ucsc/bedgraphtobigwig/main'    
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -32,30 +36,17 @@ include { MODKIT_PILEUP          } from '../modules/nf-core/modkit/pileup'
 workflow VARIANTPIPELINE {
 
     take:
+
     samplesheet // channel: samplesheet read in from --input
     fasta
     fasta_fai
     fasta_gzi
+    chrom_sizes
 
     main:
 
-    ch_versions = Channel.empty()
-    ch_multiqc_files = Channel.empty()
-/*     samplesheet.view()
-    DORADO_BASECALLER( samplesheet, fasta, fasta_fai )
-    SAMTOOLS_SORT( DORADO_BASECALLER.out.bam_out, fasta, "bai" )
-
-    ch_bams_for_merge = SAMTOOLS_SORT.out.bam
-        .map { meta, bam -> bam } 
-        .collect()
-        .map { bams -> [ [id:'all_samples'], bams ] }
-
-    ch_reference = [ [id:'genome'], fasta, fasta_fai, fasta_gzi ]
-
-    SAMTOOLS_MERGE (
-        ch_bams_for_merge,
-        ch_reference
-    ) */
+    ch_versions = channel.empty()
+    ch_multiqc_files = channel.empty()
 
     if (params.step == 'mapping') {
         FASTQC (
@@ -75,19 +66,27 @@ workflow VARIANTPIPELINE {
         bam_bai = MINIMAP2_ALIGN.out.bam.join(MINIMAP2_ALIGN.out.index) // channel: [ val(meta), path(bam), path(bai) ]
     }
     else if (params.step == 'basecalling') {
-        samplesheet.view()
-        fasta.view()
-        fasta_fai.view()
-        DORADO_BASECALLER ( samplesheet, fasta, fasta_fai )
-        samplesheet.view()
-        SAMTOOLS_SORT ( DORADO_BASECALLER.out.bam_out, fasta, "bai" )
+
+        model_ch = channel.of([ 
+            [id: 'dna_r10.4.1_e8.2_400bps_hac@v5.2.0'], 
+            "dna_r10.4.1_e8.2_400bps_hac@v5.2.0" 
+        ])
+
+        DORADO_DOWNLOAD ( model_ch )
+
+        DORADO_BASECALLER (
+            samplesheet, fasta, fasta_fai,
+            "cpu", DORADO_DOWNLOAD.out.model
+        )
+
+        SAMTOOLS_SORT ( DORADO_BASECALLER.out.bam, fasta, "bai" )
 
         ch_bams_for_merge = SAMTOOLS_SORT.out.bam
             .map { meta, bam -> bam } 
             .collect()
             .map { bams -> [ [id:'all_samples'], bams ] }
 
-        // ch_reference = [ [id:'genome'], fasta, fasta_fai, fasta_gzi ] mal, fasta, fasta_fai y fasta_gzi son canales no paths
+        // ch_reference = [ [id:'genome'], fasta, fasta_fai, fasta_gzi ] da error. fasta, fasta_fai y fasta_gzi son canales no paths
         ch_reference = fasta.map { meta, file -> file }
             .combine( fasta_fai.map { meta, file -> file } )
             .combine( fasta_gzi.map { meta, file -> file } )
@@ -101,9 +100,7 @@ workflow VARIANTPIPELINE {
         SAMTOOLS_INDEX ( SAMTOOLS_MERGE.out.bam )
 
         bam_bai = SAMTOOLS_MERGE.out.bam.join(SAMTOOLS_INDEX.out.bai)
-        bam_bai.view()
 
-        bam_bai.view()
     }
     else if (params.step == 'variant_calling') {
         bam_bai = samplesheet
@@ -115,14 +112,37 @@ workflow VARIANTPIPELINE {
         merged_final_bed = samplesheet
     }
 
-    // MODKIT_PILEUP( bam_bai, ch_reference, [] )
+    if (params.CG_methyl && params.step != 'variant_calling' && params.step != 'mapping' && params.step != 'basecalling') {
+        SAMTOOLS_INDEX ( samplesheet )
 
+        bam_bai = samplesheet.join(SAMTOOLS_INDEX.out.bai)
+
+        ch_reference = fasta.map { meta, file -> file }
+            .combine( fasta_fai.map { meta, file -> file } )
+            .map { fa, fai -> [ [id:'genome'], fa, fai ] }
+    }
+    
+    if (params.CG_methyl) {
+        ch_reference = fasta.map { meta, file -> file }
+            .combine( fasta_fai.map { meta, file -> file } )
+            .map { fa, fai -> [ [id:'genome'], fa, fai ] }
+        
+        ch_bed = channel.of([ [id:'none'], [] ])  // change it if you want to analyze a specific region 
+
+        MODKIT_PILEUP( bam_bai, ch_reference, ch_bed )
+
+        BEDMETHYL_TO_BEDGRAPH( MODKIT_PILEUP.out.bedgz )
+
+        UCSC_BEDGRAPHTOBIGWIG( BEDMETHYL_TO_BEDGRAPH.out.bedGraph, chrom_sizes )
+
+
+    }
 
     //
     // SUBWORKFLOW: Run Deepvariant, Clair3 & NanoCaller
     //
 
- /*    if (params.snv_calling == true) {
+    if (params.snv_calling == true) {
         SNV_CALLING (
             bam_bai,
             fasta,
@@ -200,7 +220,7 @@ workflow VARIANTPIPELINE {
                 merged_final_bed
             )
         }
-    } */
+    }
 
     //
     // Collate and save software versions
@@ -244,9 +264,8 @@ workflow VARIANTPIPELINE {
             sort: true
         )
     )
-
     MULTIQC (
-        ch_multiqc_files.collect(),
+        ch_multiqc_files.toSortedList(),
         ch_multiqc_config.toList(),
         ch_multiqc_custom_config.toList(),
         ch_multiqc_logo.toList()

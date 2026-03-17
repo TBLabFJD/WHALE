@@ -1,0 +1,37 @@
+// TODO nf-core: Once you have added the required tests, please run the following command to build this file:
+// nf-core modules test dorado_download
+nextflow_process {
+
+    name "Test Process DORADO_DOWNLOAD"
+    script "../main.nf"
+    process "DORADO_DOWNLOAD"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "dorado_download"
+
+    // TODO nf-core: Change the test name preferably indicating the test-data and file-format used
+    test("dorado_download - no file") {
+
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                    [ id : 'test_sample' ],
+                    "dna_r10.4.1_e8.2_400bps_hac@v5.2.0" 
+                ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+                //TODO nf-core: Add all required assertions to verify the test output.
+                // See https://nf-co.re/docs/contributing/tutorials/nf-test_assertions for more information and examples.
+            )
+        }
+
+    }
+}

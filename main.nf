@@ -33,6 +33,7 @@ include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_vari
 params.fasta     = getGenomeAttribute('fasta')
 params.fasta_fai = getGenomeAttribute('fasta_fai')
 params.fasta_gzi = getGenomeAttribute('fasta_gzi')
+params.chrom_sizes = getGenomeAttribute('chrom_sizes')
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -50,6 +51,7 @@ workflow NFCORE_VARIANTPIPELINE {
     fasta
     fasta_fai
     fasta_gzi
+    chrom_sizes
     
     main:
 
@@ -60,7 +62,8 @@ workflow NFCORE_VARIANTPIPELINE {
         samplesheet,
         fasta,
         fasta_fai,
-        fasta_gzi
+        fasta_gzi,
+        chrom_sizes
     )
 
     emit:
@@ -84,6 +87,7 @@ workflow {
     def ch_fasta     = params.fasta     ? Channel.fromPath(params.fasta).map{ it -> [ [id:it.baseName], it ] }.collect() : Channel.empty()
     def ch_fasta_fai = params.fasta_fai ? Channel.fromPath(params.fasta_fai).map{ it -> [ [id:it.baseName], it ] }.collect() : Channel.empty()
     def ch_fasta_gzi = params.fasta_gzi ? Channel.fromPath(params.fasta_gzi).map{ it -> [ [id:it.baseName], it ] }.collect() : Channel.empty()
+    def ch_chrom_sizes = params.chrom_sizes ? Channel.fromPath(params.chrom_sizes).first() : Channel.empty()
 
     //
     // SUBWORKFLOW: Run initialisation tasks
@@ -105,7 +109,8 @@ workflow {
         PIPELINE_INITIALISATION.out.samplesheet,
         ch_fasta,
         ch_fasta_fai,
-        ch_fasta_gzi
+        ch_fasta_gzi,
+        ch_chrom_sizes
     )
 
     //
