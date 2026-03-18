@@ -1,0 +1,136 @@
+{
+    "dorado_download - no file": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test_sample"
+                        },
+                        [
+                            "0.conv.bias.tensor:md5,17b05f2a6be4dbf8b0933ec310d44278",
+                            "0.conv.weight.tensor:md5,e7b9b9849bc05b5c6cff1985f0fccf08",
+                            "1.conv.bias.tensor:md5,44333406c60c2c36cd44aa4dc50f74bd",
+                            "1.conv.weight.tensor:md5,47952c467fc29931e9739e7c58a51b76",
+                            "10.rnn.bias_hh_l0.tensor:md5,a53f8dab9eb151c3bdd675855a9efa48",
+                            "10.rnn.bias_ih_l0.tensor:md5,e456b3aa1f89e1d8d436d97bfee55b96",
+                            "10.rnn.weight_hh_l0.tensor:md5,c6f827cc5549fe647401ecc67317eb41",
+                            "10.rnn.weight_ih_l0.tensor:md5,0ef3c663696ba6a8e51e045d1ab54438",
+                            "11.linear.weight.tensor:md5,542f3a3ca879b33b3ee061ddf196c3e7",
+                            "2.conv.bias.tensor:md5,0c9cd32c306d20110c05170ea1ab2d7a",
+                            "2.conv.weight.tensor:md5,fdd2be31789385873b14fff8d8fb8a41",
+                            "4.rnn.bias_hh_l0.tensor:md5,96af03575e3ffbde81da88da7fd2a29d",
+                            "4.rnn.bias_ih_l0.tensor:md5,5895ed6c432a251fcd9886d4eafc8fd0",
+                            "4.rnn.weight_hh_l0.tensor:md5,0c60f193d1f0f8b9a5e188d03569d340",
+                            "4.rnn.weight_ih_l0.tensor:md5,17a53455eab27b0accc78b78dc28aa0d",
+                            "5.rnn.bias_hh_l0.tensor:md5,36c5a5f358866ac1f6f67b2717340e89",
+                            "5.rnn.bias_ih_l0.tensor:md5,4699bf344755199c910ad4491aeb36b7",
+                            "5.rnn.weight_hh_l0.tensor:md5,134f4f8978d7da873630839f760930f0",
+                            "5.rnn.weight_ih_l0.tensor:md5,fe55c954dbb52bd1786644e339aaa88a",
+                            "6.rnn.bias_hh_l0.tensor:md5,09eb4282023b00969ec2128836a5cf1d",
+                            "6.rnn.bias_ih_l0.tensor:md5,8317677d6fea2429081bc8165f3bb7be",
+                            "6.rnn.weight_hh_l0.tensor:md5,34840ac14efe15fc1625b17d23fdc1ac",
+                            "6.rnn.weight_ih_l0.tensor:md5,dc9262668e0fad9ae5eaaaa991bf0ca7",
+                            "7.rnn.bias_hh_l0.tensor:md5,b288c874b0091b4ecfe45a39492a1076",
+                            "7.rnn.bias_ih_l0.tensor:md5,0a29e0373aa4e2d7c6484bcd94b87dc2",
+                            "7.rnn.weight_hh_l0.tensor:md5,5ed166c75178d7ec945889943fd2e5ea",
+                            "7.rnn.weight_ih_l0.tensor:md5,b4b0ec576d581203622a45ac3173de85",
+                            "8.rnn.bias_hh_l0.tensor:md5,5ef5902fd38ff1c6489a4ba796f0d59a",
+                            "8.rnn.bias_ih_l0.tensor:md5,a8dfe2e84eafddf13114dc0189abbb72",
+                            "8.rnn.weight_hh_l0.tensor:md5,ba6e59eff143310e86bc506583fb0f0a",
+                            "8.rnn.weight_ih_l0.tensor:md5,29a44dae0b521ed119f045f9a597b0db",
+                            "9.rnn.bias_hh_l0.tensor:md5,f0b888b953cad24acbd63e968021f9cd",
+                            "9.rnn.bias_ih_l0.tensor:md5,2e6ef81e4497408d67e15c6a9a27d168",
+                            "9.rnn.weight_hh_l0.tensor:md5,bbe375388eaf6c52e12128c4fa9c17e2",
+                            "9.rnn.weight_ih_l0.tensor:md5,2a108af01fcefa103b5ba1610e839ca6",
+                            "config.toml:md5,7f26a7cbba4a2d9654cf8bfeea1e0327"
+                        ]
+                    ]
+                ],
+                "model": [
+                    [
+                        {
+                            "id": "test_sample"
+                        },
+                        [
+                            "0.conv.bias.tensor:md5,17b05f2a6be4dbf8b0933ec310d44278",
+                            "0.conv.weight.tensor:md5,e7b9b9849bc05b5c6cff1985f0fccf08",
+                            "1.conv.bias.tensor:md5,44333406c60c2c36cd44aa4dc50f74bd",
+                            "1.conv.weight.tensor:md5,47952c467fc29931e9739e7c58a51b76",
+                            "10.rnn.bias_hh_l0.tensor:md5,a53f8dab9eb151c3bdd675855a9efa48",
+                            "10.rnn.bias_ih_l0.tensor:md5,e456b3aa1f89e1d8d436d97bfee55b96",
+                            "10.rnn.weight_hh_l0.tensor:md5,c6f827cc5549fe647401ecc67317eb41",
+                            "10.rnn.weight_ih_l0.tensor:md5,0ef3c663696ba6a8e51e045d1ab54438",
+                            "11.linear.weight.tensor:md5,542f3a3ca879b33b3ee061ddf196c3e7",
+                            "2.conv.bias.tensor:md5,0c9cd32c306d20110c05170ea1ab2d7a",
+                            "2.conv.weight.tensor:md5,fdd2be31789385873b14fff8d8fb8a41",
+                            "4.rnn.bias_hh_l0.tensor:md5,96af03575e3ffbde81da88da7fd2a29d",
+                            "4.rnn.bias_ih_l0.tensor:md5,5895ed6c432a251fcd9886d4eafc8fd0",
+                            "4.rnn.weight_hh_l0.tensor:md5,0c60f193d1f0f8b9a5e188d03569d340",
+                            "4.rnn.weight_ih_l0.tensor:md5,17a53455eab27b0accc78b78dc28aa0d",
+                            "5.rnn.bias_hh_l0.tensor:md5,36c5a5f358866ac1f6f67b2717340e89",
+                            "5.rnn.bias_ih_l0.tensor:md5,4699bf344755199c910ad4491aeb36b7",
+                            "5.rnn.weight_hh_l0.tensor:md5,134f4f8978d7da873630839f760930f0",
+                            "5.rnn.weight_ih_l0.tensor:md5,fe55c954dbb52bd1786644e339aaa88a",
+                            "6.rnn.bias_hh_l0.tensor:md5,09eb4282023b00969ec2128836a5cf1d",
+                            "6.rnn.bias_ih_l0.tensor:md5,8317677d6fea2429081bc8165f3bb7be",
+                            "6.rnn.weight_hh_l0.tensor:md5,34840ac14efe15fc1625b17d23fdc1ac",
+                            "6.rnn.weight_ih_l0.tensor:md5,dc9262668e0fad9ae5eaaaa991bf0ca7",
+                            "7.rnn.bias_hh_l0.tensor:md5,b288c874b0091b4ecfe45a39492a1076",
+                            "7.rnn.bias_ih_l0.tensor:md5,0a29e0373aa4e2d7c6484bcd94b87dc2",
+                            "7.rnn.weight_hh_l0.tensor:md5,5ed166c75178d7ec945889943fd2e5ea",
+                            "7.rnn.weight_ih_l0.tensor:md5,b4b0ec576d581203622a45ac3173de85",
+                            "8.rnn.bias_hh_l0.tensor:md5,5ef5902fd38ff1c6489a4ba796f0d59a",
+                            "8.rnn.bias_ih_l0.tensor:md5,a8dfe2e84eafddf13114dc0189abbb72",
+                            "8.rnn.weight_hh_l0.tensor:md5,ba6e59eff143310e86bc506583fb0f0a",
+                            "8.rnn.weight_ih_l0.tensor:md5,29a44dae0b521ed119f045f9a597b0db",
+                            "9.rnn.bias_hh_l0.tensor:md5,f0b888b953cad24acbd63e968021f9cd",
+                            "9.rnn.bias_ih_l0.tensor:md5,2e6ef81e4497408d67e15c6a9a27d168",
+                            "9.rnn.weight_hh_l0.tensor:md5,bbe375388eaf6c52e12128c4fa9c17e2",
+                            "9.rnn.weight_ih_l0.tensor:md5,2a108af01fcefa103b5ba1610e839ca6",
+                            "config.toml:md5,7f26a7cbba4a2d9654cf8bfeea1e0327"
+                        ]
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-03-17T16:11:01.106610226"
+    },
+    "dorado_basecaller - pod5": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test_sample"
+                        },
+                        "test_sample_basecall.bam:md5,45af9f1c37158f1e6f1964f7bd2dc8fc"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,dcf16d12f67766a9fc7fc53a50b34284"
+                ],
+                "bam": [
+                    [
+                        {
+                            "id": "test_sample"
+                        },
+                        "test_sample_basecall.bam:md5,45af9f1c37158f1e6f1964f7bd2dc8fc"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,dcf16d12f67766a9fc7fc53a50b34284"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-03-18T09:45:56.958179897"
+    }
+}

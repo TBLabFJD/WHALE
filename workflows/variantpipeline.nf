@@ -23,7 +23,7 @@ include { SAMTOOLS_SORT            } from '../modules/nf-core/samtools/sort'
 include { SAMTOOLS_MERGE           } from '../modules/nf-core/samtools/merge'
 include { SAMTOOLS_INDEX           } from '../modules/nf-core/samtools/index'
 include { MODKIT_PILEUP            } from '../modules/nf-core/modkit/pileup'
-include { BEDMETHYL_TO_BEDGRAPH    } from '../modules/local/bedmethyltobedgraph'
+include { BEDMETHYL_TO_BEDGRAPH    } from '../modules/local/bedmethyl_to_bedgraph'
 include { UCSC_BEDGRAPHTOBIGWIG    } from '../modules/nf-core/ucsc/bedgraphtobigwig/main'    
 
 
@@ -76,7 +76,7 @@ workflow VARIANTPIPELINE {
 
         DORADO_BASECALLER (
             samplesheet, fasta, fasta_fai,
-            "cpu", DORADO_DOWNLOAD.out.model
+            params.device, DORADO_DOWNLOAD.out.model
         )
 
         SAMTOOLS_SORT ( DORADO_BASECALLER.out.bam, fasta, "bai" )
