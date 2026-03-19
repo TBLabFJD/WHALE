@@ -1,0 +1,29 @@
+{
+    "bedmethyl_to_bedgraph - bedgz": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "all_samples"
+                        },
+                        "all_samples.bedGraph:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "bedGraph": [
+                    [
+                        {
+                            "id": "all_samples"
+                        },
+                        "all_samples.bedGraph:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-03-18T12:12:44.776466038"
+    }
+}
