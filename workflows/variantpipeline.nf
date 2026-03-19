@@ -76,7 +76,7 @@ workflow VARIANTPIPELINE {
 
         DORADO_BASECALLER (
             samplesheet, fasta, fasta_fai,
-            params.device, DORADO_DOWNLOAD.out.model
+            params.device, DORADO_DOWNLOAD.out.model.first()
         )
 
         SAMTOOLS_SORT ( DORADO_BASECALLER.out.bam, fasta, "bai" )
@@ -84,7 +84,7 @@ workflow VARIANTPIPELINE {
         ch_bams_for_merge = SAMTOOLS_SORT.out.bam
             .map { meta, bam -> bam } 
             .collect()
-            .map { bams -> [ [id:'all_samples'], bams ] }
+            .map { bams -> [ [id:'merged'], bams ] }
 
         // ch_reference = [ [id:'genome'], fasta, fasta_fai, fasta_gzi ] da error. fasta, fasta_fai y fasta_gzi son canales no paths
         ch_reference = fasta.map { meta, file -> file }
