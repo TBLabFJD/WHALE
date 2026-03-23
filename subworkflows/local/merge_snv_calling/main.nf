@@ -3,12 +3,14 @@ include { BCFTOOLS_VIEW          } from '../../../modules/nf-core/bcftools/view/
 include { BCFTOOLS_MERGE         } from '../../../modules/nf-core/bcftools/merge/main'
 include { TABIX_TABIX as TABIX_1 } from '../../../modules/nf-core/tabix/tabix/main'
 include { TABIX_TABIX as TABIX_2 } from '../../../modules/nf-core/tabix/tabix/main'
+include { TABIX_TABIX as TABIX_3 } from '../../../modules/nf-core/tabix/tabix/main'
 include { GET_VCF_FIELDS         } from '../../../modules/local/get_vcf_fields/main'
 include { CONSENSUS_GT           } from '../../../modules/local/consensus_gt/main'
 include { SOFTWARE_INFO          } from '../../../modules/local/software_info/main'
 include { SAMPLE_INFO            } from '../../../modules/local/sample_info/main'
 include { FORMAT_VCF             } from '../../../modules/local/format_vcf/main'
 include { HEADER_VARIANTS_VCF    } from '../../../modules/local/header_variants_vcf/main'
+include { TABIX_BGZIP            } from '../../../modules/nf-core/tabix/bgzip/main'
 
 workflow MERGE_SNV_CALLING {
 
@@ -72,6 +74,13 @@ workflow MERGE_SNV_CALLING {
     HEADER_VARIANTS_VCF (
         header_variants_vcf_input)
 
+    TABIX_BGZIP (
+        HEADER_VARIANTS_VCF.out.final_vcf)
+    
+    TABIX_3 (
+        TABIX_BGZIP.out.output)
+
     emit:
     final_vcf = HEADER_VARIANTS_VCF.out.final_vcf
+    final_tbi = TABIX_3.out.tbi
 }

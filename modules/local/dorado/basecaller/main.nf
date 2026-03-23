@@ -6,10 +6,9 @@ process DORADO_BASECALLER {
 
     input:
     tuple val(meta), path(pod5)
-    tuple val(meta2), path(fasta)
-    tuple val(meta3), path(fai)
+    tuple val(meta2), path(fasta), path(fai)
     val dorado_device
-    tuple val(meta4), path(model_dir)
+    tuple val(meta3), path(model_dir)
 
     output:
     tuple val(meta), path("${meta.id}_basecall.bam")  , emit: bam

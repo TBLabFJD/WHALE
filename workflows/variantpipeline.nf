@@ -24,8 +24,9 @@ include { SAMTOOLS_MERGE           } from '../modules/nf-core/samtools/merge'
 include { SAMTOOLS_INDEX           } from '../modules/nf-core/samtools/index'
 include { MODKIT_PILEUP            } from '../modules/nf-core/modkit/pileup'
 include { BEDMETHYL_TO_BEDGRAPH    } from '../modules/local/bedmethyl_to_bedgraph'
-include { UCSC_BEDGRAPHTOBIGWIG    } from '../modules/nf-core/ucsc/bedgraphtobigwig/main'    
-
+include { UCSC_BEDGRAPHTOBIGWIG    } from '../modules/nf-core/ucsc/bedgraphtobigwig'    
+include { WHATSHAP_PHASE           } from '../modules/nf-core/whatshap/phase'
+include { WHATSHAP_HAPLOTAG        } from '../modules/nf-core/whatshap/haplotag'  
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,12 +75,22 @@ workflow VARIANTPIPELINE {
 
         DORADO_DOWNLOAD ( model_ch )
 
+        ch_reference = fasta.map { meta, file -> file }
+            .combine( fasta_fai.map { meta, file -> file } )
+            .map { fa, fai -> [ [id:'genome'], fa, fai ] }
+
         DORADO_BASECALLER (
-            samplesheet, fasta, fasta_fai,
-            params.device, DORADO_DOWNLOAD.out.model.first()
+            samplesheet,
+            ch_reference.first(),
+            params.device,
+            DORADO_DOWNLOAD.out.model.first()
         )
 
-        SAMTOOLS_SORT ( DORADO_BASECALLER.out.bam, fasta, "bai" )
+        SAMTOOLS_SORT (
+            DORADO_BASECALLER.out.bam,
+            ch_reference.first(),
+            "bai"
+        )
 
         ch_bams_for_merge = SAMTOOLS_SORT.out.bam
             .map { meta, bam -> bam } 
@@ -129,11 +140,18 @@ workflow VARIANTPIPELINE {
         
         ch_bed = channel.of([ [id:'none'], [] ])  // change it if you want to analyze a specific region 
 
-        MODKIT_PILEUP( bam_bai, ch_reference, ch_bed )
+        MODKIT_PILEUP(
+            bam_bai,
+            ch_reference,
+            ch_bed 
+        )
 
         BEDMETHYL_TO_BEDGRAPH( MODKIT_PILEUP.out.bedgz )
 
-        UCSC_BEDGRAPHTOBIGWIG( BEDMETHYL_TO_BEDGRAPH.out.bedGraph, chrom_sizes )
+        UCSC_BEDGRAPHTOBIGWIG(
+            BEDMETHYL_TO_BEDGRAPH.out.bedGraph,
+            chrom_sizes
+        )
 
 
     }
@@ -222,6 +240,42 @@ workflow VARIANTPIPELINE {
         }
     }
 
+    if (params.phasing == true) {
+
+        merged_vcf = MERGE_SNV_CALLING.out.final_vcf
+        merged_tbi = MERGE_SNV_CALLING.out.final_tbi
+
+        ch_vcf_tbi = merged_vcf.map { meta, file -> file }
+            .combine( merged_tbi.map { meta, file -> file } )
+            .map { vcf, tbi -> [ [ id:'merged_vcf' ], vcf, tbi ] }
+
+        ch_reference = fasta.map { meta, file -> file }
+            .combine( fasta_fai.map { meta, file -> file } )
+            .map { fa, fai -> [ [id:'genome'], fa, fai ] }
+
+        WHATSHAP_PHASE (
+            ch_vcf_tbi,
+            bam_bai,
+            ch_reference
+        )
+
+        ch_haplotag_input = WHATSHAP_PHASE.out.vcf.join(WHATSHAP_PHASE.out.tbi)
+            .combine(bam_bai)
+            .map { meta_vcf, vcf, tbi, meta_bam, bam, bai ->
+                
+                def new_meta = [id: 'phasing_files'] 
+
+                [ new_meta, vcf, tbi, bam, bai ]
+            }
+
+        WHATSHAP_HAPLOTAG (
+            ch_haplotag_input,
+            fasta,
+            fasta_fai,
+            'true'
+        )
+    }
+
     //
     // Collate and save software versions
     //
@@ -236,23 +290,23 @@ workflow VARIANTPIPELINE {
     //
     // MODULE: MultiQC
     //
-    ch_multiqc_config        = Channel.fromPath(
+    ch_multiqc_config        = channel.fromPath(
         "$projectDir/assets/multiqc_config.yml", checkIfExists: true)
     ch_multiqc_custom_config = params.multiqc_config ?
-        Channel.fromPath(params.multiqc_config, checkIfExists: true) :
-        Channel.empty()
+        channel.fromPath(params.multiqc_config, checkIfExists: true) :
+        channel.empty()
     ch_multiqc_logo          = params.multiqc_logo ?
-        Channel.fromPath(params.multiqc_logo, checkIfExists: true) :
-        Channel.empty()
+        channel.fromPath(params.multiqc_logo, checkIfExists: true) :
+        channel.empty()
 
     summary_params      = paramsSummaryMap(
         workflow, parameters_schema: "nextflow_schema.json")
-    ch_workflow_summary = Channel.value(paramsSummaryMultiqc(summary_params))
+    ch_workflow_summary = channel.value(paramsSummaryMultiqc(summary_params))
 
     ch_multiqc_custom_methods_description = params.multiqc_methods_description ?
         file(params.multiqc_methods_description, checkIfExists: true) :
         file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-    ch_methods_description                = Channel.value(
+    ch_methods_description                = channel.value(
         methodsDescriptionText(ch_multiqc_custom_methods_description))
 
     ch_multiqc_files = ch_multiqc_files.mix(
