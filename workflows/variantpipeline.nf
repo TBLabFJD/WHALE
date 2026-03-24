@@ -4,29 +4,30 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { FASTQC                   } from '../modules/nf-core/fastqc/main'
-include { MULTIQC                  } from '../modules/nf-core/multiqc/main'
-include { MINIMAP2_ALIGN           } from '../modules/nf-core/minimap2/align/main'
-include { paramsSummaryMap         } from 'plugin/nf-validation'
-include { paramsSummaryMultiqc     } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { softwareVersionsToYAML   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { methodsDescriptionText   } from '../subworkflows/local/utils_nfcore_variantpipeline_pipeline'
-include { SNV_CALLING              } from '../subworkflows/local/snv_calling'
-include { SV_CALLING               } from '../subworkflows/local/sv_calling'
-include { MERGE_SNV_CALLING        } from '../subworkflows/local/merge_snv_calling'
-include { MERGE_SV_CALLING         } from '../subworkflows/local/merge_sv_calling'
-include { SNV_ANNOTATION           } from '../subworkflows/local/snv_annotation'
-include { SV_ANNOTATION            } from '../subworkflows/local/sv_annotation'
-include { DORADO_BASECALLER        } from '../modules/local/dorado/basecaller'
-include { DORADO_DOWNLOAD          } from '../modules/local/dorado/download'
-include { SAMTOOLS_SORT            } from '../modules/nf-core/samtools/sort'
-include { SAMTOOLS_MERGE           } from '../modules/nf-core/samtools/merge'
-include { SAMTOOLS_INDEX           } from '../modules/nf-core/samtools/index'
-include { MODKIT_PILEUP            } from '../modules/nf-core/modkit/pileup'
-include { BEDMETHYL_TO_BEDGRAPH    } from '../modules/local/bedmethyl_to_bedgraph'
-include { UCSC_BEDGRAPHTOBIGWIG    } from '../modules/nf-core/ucsc/bedgraphtobigwig'    
-include { WHATSHAP_PHASE           } from '../modules/nf-core/whatshap/phase'
-include { WHATSHAP_HAPLOTAG        } from '../modules/nf-core/whatshap/haplotag'  
+include { FASTQC                    } from '../modules/nf-core/fastqc/main'
+include { MULTIQC                   } from '../modules/nf-core/multiqc/main'
+include { MINIMAP2_ALIGN            } from '../modules/nf-core/minimap2/align/main'
+include { paramsSummaryMap          } from 'plugin/nf-validation'
+include { paramsSummaryMultiqc      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { softwareVersionsToYAML    } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { methodsDescriptionText    } from '../subworkflows/local/utils_nfcore_variantpipeline_pipeline'
+include { SNV_CALLING               } from '../subworkflows/local/snv_calling'
+include { SV_CALLING                } from '../subworkflows/local/sv_calling'
+include { MERGE_SNV_CALLING         } from '../subworkflows/local/merge_snv_calling'
+include { MERGE_SV_CALLING          } from '../subworkflows/local/merge_sv_calling'
+include { SNV_ANNOTATION            } from '../subworkflows/local/snv_annotation'
+include { SV_ANNOTATION             } from '../subworkflows/local/sv_annotation'
+include { DORADO_BASECALLER         } from '../modules/local/dorado/basecaller'
+include { DORADO_DOWNLOAD           } from '../modules/local/dorado/download'
+include { SAMTOOLS_SORT             } from '../modules/nf-core/samtools/sort'
+include { SAMTOOLS_MERGE            } from '../modules/nf-core/samtools/merge'
+include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_1 } from '../modules/nf-core/samtools/index'
+include { MODKIT_PILEUP             } from '../modules/nf-core/modkit/pileup'
+include { BEDMETHYL_TO_BEDGRAPH     } from '../modules/local/bedmethyl_to_bedgraph'
+include { UCSC_BEDGRAPHTOBIGWIG     } from '../modules/nf-core/ucsc/bedgraphtobigwig'    
+include { WHATSHAP_PHASE            } from '../modules/nf-core/whatshap/phase'
+include { WHATSHAP_HAPLOTAG         } from '../modules/nf-core/whatshap/haplotag'  
+include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_2 } from '../modules/nf-core/samtools/index'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,7 +98,6 @@ workflow VARIANTPIPELINE {
             .collect()
             .map { bams -> [ [id:'merged'], bams ] }
 
-        // ch_reference = [ [id:'genome'], fasta, fasta_fai, fasta_gzi ] da error. fasta, fasta_fai y fasta_gzi son canales no paths
         ch_reference = fasta.map { meta, file -> file }
             .combine( fasta_fai.map { meta, file -> file } )
             .combine( fasta_gzi.map { meta, file -> file } )
@@ -108,9 +108,9 @@ workflow VARIANTPIPELINE {
             ch_reference
         )
 
-        SAMTOOLS_INDEX ( SAMTOOLS_MERGE.out.bam )
+        SAMTOOLS_INDEX_1 ( SAMTOOLS_MERGE.out.bam )
 
-        bam_bai = SAMTOOLS_MERGE.out.bam.join(SAMTOOLS_INDEX.out.bai)
+        bam_bai = SAMTOOLS_MERGE.out.bam.join(SAMTOOLS_INDEX_1.out.bai)
 
     }
     else if (params.step == 'variant_calling') {
@@ -123,14 +123,11 @@ workflow VARIANTPIPELINE {
         merged_final_bed = samplesheet
     }
 
-    if (params.CG_methyl && params.step != 'variant_calling' && params.step != 'mapping' && params.step != 'basecalling') {
-        SAMTOOLS_INDEX ( samplesheet )
+    if (params.CG_methyl && params.step != 'mapping' && params.step != 'basecalling') {
+        SAMTOOLS_INDEX_1 ( samplesheet )
 
-        bam_bai = samplesheet.join(SAMTOOLS_INDEX.out.bai)
+        bam_bai = samplesheet.join(SAMTOOLS_INDEX_1.out.bai)
 
-        ch_reference = fasta.map { meta, file -> file }
-            .combine( fasta_fai.map { meta, file -> file } )
-            .map { fa, fai -> [ [id:'genome'], fa, fai ] }
     }
     
     if (params.CG_methyl) {
@@ -274,6 +271,9 @@ workflow VARIANTPIPELINE {
             fasta_fai,
             'true'
         )
+
+        SAMTOOLS_INDEX_2 ( WHATSHAP_HAPLOTAG.out.bam )
+
     }
 
     //
