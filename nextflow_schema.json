@@ -1,5 +1,5 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
+    "$schema": "https://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/variantpipeline/master/nextflow_schema.json",
     "title": "nf-core/variantpipeline pipeline parameters",
     "description": "variant calling pipeline",
@@ -622,5 +622,28 @@
         {
             "$ref": "#/definitions/generic_options"
         }
-    ]
+    ],
+    "properties": {
+        "device": {
+            "type": "string",
+            "default": "cpu"
+        },
+        "chrom_sizes": {
+            "type": "string"
+        },
+        "CG_methyl": {
+            "type": "boolean"
+        },
+        "dorado_model": {
+            "type": "string",
+            "default": "dna_r10.4.1_e8.2_400bps_hac@v5.2.0"
+        },
+        "dorado_models_dir": {
+            "type": "string",
+            "default": "/mnt/tblab/barbosa/resources/dorado_models/"
+        },
+        "phasing": {
+            "type": "boolean"
+        }
+    }
 }

@@ -76,8 +76,8 @@ workflow VARIANTPIPELINE {
 
         DORADO_DOWNLOAD ( model_ch )
 
-        ch_reference = fasta.map { meta, file -> file }
-            .combine( fasta_fai.map { meta, file -> file } )
+        ch_reference = fasta.map { _meta, file -> file }
+            .combine( fasta_fai.map { _meta, file -> file } )
             .map { fa, fai -> [ [id:'genome'], fa, fai ] }
 
         DORADO_BASECALLER (
@@ -93,13 +93,13 @@ workflow VARIANTPIPELINE {
         )
 
         ch_bams_for_merge = SAMTOOLS_SORT.out.bam
-            .map { meta, bam -> bam } 
+            .map { _meta, bam -> bam } 
             .collect()
             .map { bams -> [ [id:'merged'], bams ] }
 
-        ch_reference = fasta.map { meta, file -> file }
-            .combine( fasta_fai.map { meta, file -> file } )
-            .combine( fasta_gzi.map { meta, file -> file } )
+        ch_reference = fasta.map { _meta, file -> file }
+            .combine( fasta_fai.map { _meta, file -> file } )
+            .combine( fasta_gzi.map { _meta, file -> file } )
             .map { fa, fai, gzi -> [ [id:'genome'], fa, fai, gzi ] }
 
         SAMTOOLS_MERGE (
@@ -130,8 +130,8 @@ workflow VARIANTPIPELINE {
     }
     
     if (params.CG_methyl) {
-        ch_reference = fasta.map { meta, file -> file }
-            .combine( fasta_fai.map { meta, file -> file } )
+        ch_reference = fasta.map { _meta, file -> file }
+            .combine( fasta_fai.map { _meta, file -> file } )
             .map { fa, fai -> [ [id:'genome'], fa, fai ] }
         
         ch_bed = channel.of([ [id:'none'], [] ])  // change it if you want to analyze a specific region 
@@ -211,7 +211,6 @@ workflow VARIANTPIPELINE {
     // SUBWORKFLOW: Run SNV Annotation
     //
     
-
     if (params.snv_annotation == true) {
         SNV_ANNOTATION (
             merged_vcf, 
@@ -236,17 +235,21 @@ workflow VARIANTPIPELINE {
         }
     }
 
+    //
+    // PHASING
+    //
+
     if (params.phasing == true) {
 
         merged_vcf = MERGE_SNV_CALLING.out.final_vcf
         merged_tbi = MERGE_SNV_CALLING.out.final_tbi
 
-        ch_vcf_tbi = merged_vcf.map { meta, file -> file }
-            .combine( merged_tbi.map { meta, file -> file } )
+        ch_vcf_tbi = merged_vcf.map { _meta, file -> file }
+            .combine( merged_tbi.map { _meta, file -> file } )
             .map { vcf, tbi -> [ [ id:'merged_vcf' ], vcf, tbi ] }
 
-        ch_reference = fasta.map { meta, file -> file }
-            .combine( fasta_fai.map { meta, file -> file } )
+        ch_reference = fasta.map { _meta, file -> file }
+            .combine( fasta_fai.map { _meta, file -> file } )
             .map { fa, fai -> [ [id:'genome'], fa, fai ] }
 
         WHATSHAP_PHASE (
@@ -257,7 +260,7 @@ workflow VARIANTPIPELINE {
 
         ch_haplotag_input = WHATSHAP_PHASE.out.vcf.join(WHATSHAP_PHASE.out.tbi)
             .combine(bam_bai)
-            .map { meta_vcf, vcf, tbi, meta_bam, bam, bai ->
+            .map { _meta_vcf, vcf, tbi, _meta_bam, bam, bai ->
                 
                 def new_meta = [id: 'phasing_files'] 
 

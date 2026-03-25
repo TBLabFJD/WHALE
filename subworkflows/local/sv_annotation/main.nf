@@ -10,7 +10,7 @@ workflow SV_ANNOTATION {
     main:
     if (params.sv_database == true) {
         
-        multiinter = params.sv_multiinter ? Channel.fromPath(params.sv_multiinter).collect() : Channel.empty()
+        multiinter = params.sv_multiinter ? channel.fromPath(params.sv_multiinter).collect() : channel.empty()
 
         SV_SAMPLES (
             merged_bed,
@@ -23,10 +23,10 @@ workflow SV_ANNOTATION {
         
         annotations = ANNOTSV_INSTALLANNOTATIONS.out.annotations
     } else {
-        annotations = params.annotsv_annotations ? Channel.fromPath(params.annotsv_annotations).map{ it -> [ [id:it.baseName], it ] }.collect() : Channel.empty()
+        annotations = params.annotsv_annotations ? channel.fromPath(params.annotsv_annotations).map{ it -> [ [id:it.baseName], it ] }.collect() : channel.empty()
     }
 
-    gene_transcripts = params.gene_transcripts ? Channel.fromPath(params.gene_transcripts).map{ it -> [ [id:it.baseName], it ] }.collect() : Channel.empty()
+    gene_transcripts = params.gene_transcripts ? channel.fromPath(params.gene_transcripts).map{ it -> [ [id:it.baseName], it ] }.collect() : channel.empty()
 
     annotsv_input = params.sv_database == true ? SV_SAMPLES.out.samples_info_bed : merged_bed
 

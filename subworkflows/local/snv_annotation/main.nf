@@ -61,7 +61,7 @@ workflow SNV_ANNOTATION {
     vep_plugin_files.add(file("${params.vep_annotation_dir}/${params.cADD_SNVS}", checkIfExists: true))
     vep_plugin_files.add(file("${params.vep_annotation_dir}/${params.cADD_SNVS_tbi}", checkIfExists: true))
 
-    vep_plugin_files_all = vep_plugin_files ? Channel.fromPath(vep_plugin_files).collect() : Channel.empty()
+    vep_plugin_files_all = vep_plugin_files ? channel.fromPath(vep_plugin_files).collect() : channel.empty()
 
     // vep custom
 
@@ -106,7 +106,7 @@ workflow SNV_ANNOTATION {
     vep_custom_files.add(file("${params.vep_annotation_dir}/${params.CSVS_dir}/${params.cSVS}", checkIfExists: true))
     vep_custom_files.add(file("${params.vep_annotation_dir}/${params.CSVS_dir}/${params.cSVS_tbi}", checkIfExists: true))
 
-    vep_custom_files_all = vep_custom_files ? Channel.fromPath(vep_custom_files).collect() : Channel.empty()
+    vep_custom_files_all = vep_custom_files ? channel.fromPath(vep_custom_files).collect() : channel.empty()
 
     vcf_vep = SPLITVCFPVM.out.vcfs.transpose().combine(sample_info, by: 0).combine(vep_custom_files_all.toList()) // [[meta, vcf], split, [format2info_files], [custom_files]]
 
@@ -121,19 +121,19 @@ workflow SNV_ANNOTATION {
     )
     
     dbNSFP_gene_path = "${params.vep_annotation_gene_dir}/${params.dbNSFP_gene}"
-    dbNSFP_gene = dbNSFP_gene_path ? Channel.fromPath(dbNSFP_gene_path).collect() : Channel.empty()
+    dbNSFP_gene = dbNSFP_gene_path ? channel.fromPath(dbNSFP_gene_path).collect() : channel.empty()
 
     omim_path = "${params.vep_annotation_gene_dir}/${params.omim}"
-    omim = omim_path ? Channel.fromPath(omim_path).collect() : Channel.empty()
+    omim = omim_path ? channel.fromPath(omim_path).collect() : channel.empty()
 
     regiondict_path = "${params.vep_annotation_gene_dir}/${params.regiondict}"
-    regiondict = regiondict_path ? Channel.fromPath(regiondict_path).collect() : Channel.empty()
+    regiondict = regiondict_path ? channel.fromPath(regiondict_path).collect() : channel.empty()
 
     domino_path = "${params.vep_annotation_gene_dir}/${params.domino}"
-    domino = domino_path ? Channel.fromPath(domino_path).collect() : Channel.empty()
+    domino = domino_path ? channel.fromPath(domino_path).collect() : channel.empty()
 
     tissue_expression_path = "${params.vep_annotation_gene_dir}/${params.tissue_expression}"
-    tissue_expression = tissue_expression_path ? Channel.fromPath(tissue_expression_path).collect() : Channel.empty()
+    tissue_expression = tissue_expression_path ? channel.fromPath(tissue_expression_path).collect() : channel.empty()
     
     postvep_input = ENSEMBLVEP_VEP.out.tsv.groupTuple().join(AUTOMAP.out.roh_automap)
 
