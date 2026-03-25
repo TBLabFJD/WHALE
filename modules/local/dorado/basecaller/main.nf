@@ -7,7 +7,6 @@ process DORADO_BASECALLER {
     input:
     tuple val(meta), path(pod5)
     tuple val(meta2), path(fasta), path(fai)
-    val dorado_device
     tuple val(meta3), path(model_dir)
 
     output:
@@ -16,13 +15,11 @@ process DORADO_BASECALLER {
 
     script:
     def args   = task.ext.args ?: ''
-    def device = dorado_device ? "--device ${dorado_device}" : ''
     """
     dorado \\
         basecaller \\
         $model_dir \\
         $pod5 \\
-        $device \\
         $args \\
         --reference $fasta \\
         > ${meta.id}_basecall.bam

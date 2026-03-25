@@ -70,8 +70,8 @@ workflow VARIANTPIPELINE {
     else if (params.step == 'basecalling') {
 
         model_ch = channel.of([ 
-            [id: 'dna_r10.4.1_e8.2_400bps_hac@v5.2.0'], 
-            "dna_r10.4.1_e8.2_400bps_hac@v5.2.0" 
+            [id: 'dorado_model'], 
+            params.dorado_model
         ])
 
         DORADO_DOWNLOAD ( model_ch )
@@ -83,7 +83,6 @@ workflow VARIANTPIPELINE {
         DORADO_BASECALLER (
             samplesheet,
             ch_reference.first(),
-            params.device,
             DORADO_DOWNLOAD.out.model.first()
         )
 
