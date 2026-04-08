@@ -28,6 +28,7 @@ include { UCSC_BEDGRAPHTOBIGWIG     } from '../modules/nf-core/ucsc/bedgraphtobi
 include { WHATSHAP_PHASE            } from '../modules/nf-core/whatshap/phase'
 include { WHATSHAP_HAPLOTAG         } from '../modules/nf-core/whatshap/haplotag'  
 include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_2 } from '../modules/nf-core/samtools/index'
+include { WHATSHAP_SPLIT            } from '../modules/local/whatshap/split'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -122,13 +123,6 @@ workflow VARIANTPIPELINE {
         merged_final_bed = samplesheet
     }
 
-    if (params.CG_methyl && params.step != 'mapping' && params.step != 'basecalling') {
-        SAMTOOLS_INDEX_1 ( samplesheet )
-
-        bam_bai = samplesheet.join(SAMTOOLS_INDEX_1.out.bai)
-
-    }
-    
     if (params.CG_methyl) {
         ch_reference = fasta.map { _meta, file -> file }
             .combine( fasta_fai.map { _meta, file -> file } )
@@ -271,10 +265,14 @@ workflow VARIANTPIPELINE {
             ch_haplotag_input,
             fasta,
             fasta_fai,
-            'true'
+            true
         )
 
         SAMTOOLS_INDEX_2 ( WHATSHAP_HAPLOTAG.out.bam )
+
+        hap_bam_bai = WHATSHAP_HAPLOTAG.out.bam.join(SAMTOOLS_INDEX_2.out.bai)
+
+        WHATSHAP_SPLIT ( hap_bam_bai, WHATSHAP_HAPLOTAG.out.tsv )
 
     }
 
