@@ -125,6 +125,11 @@
                         "branch": "master",
                         "git_sha": "b2e78932ef01165fd85829513eaca29eff8e640a",
                         "installed_by": ["modules"]
+                    },
+                    "whatshap/stats": {
+                        "branch": "master",
+                        "git_sha": "bfab71f4d68c1aaff09335a3433e7b2836918b2a",
+                        "installed_by": ["modules"]
                     }
                 }
             },

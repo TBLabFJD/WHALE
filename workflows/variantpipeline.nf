@@ -17,18 +17,12 @@ include { MERGE_SNV_CALLING         } from '../subworkflows/local/merge_snv_call
 include { MERGE_SV_CALLING          } from '../subworkflows/local/merge_sv_calling'
 include { SNV_ANNOTATION            } from '../subworkflows/local/snv_annotation'
 include { SV_ANNOTATION             } from '../subworkflows/local/sv_annotation'
-include { DORADO_BASECALLER         } from '../modules/local/dorado/basecaller'
-include { DORADO_DOWNLOAD           } from '../modules/local/dorado/download'
-include { SAMTOOLS_SORT             } from '../modules/nf-core/samtools/sort'
-include { SAMTOOLS_MERGE            } from '../modules/nf-core/samtools/merge'
-include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_1 } from '../modules/nf-core/samtools/index'
+include { BASECALLING               } from '../subworkflows/local/basecalling' 
 include { MODKIT_PILEUP             } from '../modules/nf-core/modkit/pileup'
 include { BEDMETHYL_TO_BEDGRAPH     } from '../modules/local/bedmethyl_to_bedgraph'
-include { UCSC_BEDGRAPHTOBIGWIG     } from '../modules/nf-core/ucsc/bedgraphtobigwig'    
-include { WHATSHAP_PHASE            } from '../modules/nf-core/whatshap/phase'
-include { WHATSHAP_HAPLOTAG         } from '../modules/nf-core/whatshap/haplotag'  
-include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_2 } from '../modules/nf-core/samtools/index'
-include { WHATSHAP_SPLIT            } from '../modules/local/whatshap/split'
+include { UCSC_BEDGRAPHTOBIGWIG     } from '../modules/nf-core/ucsc/bedgraphtobigwig'  
+include { PHASING                   } from '../subworkflows/local/phasing'  
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -69,48 +63,14 @@ workflow VARIANTPIPELINE {
         bam_bai = MINIMAP2_ALIGN.out.bam.join(MINIMAP2_ALIGN.out.index) // channel: [ val(meta), path(bam), path(bai) ]
     }
     else if (params.step == 'basecalling') {
-
-        model_ch = channel.of([ 
-            [id: 'dorado_model'], 
-            params.dorado_model
-        ])
-
-        DORADO_DOWNLOAD ( model_ch )
-
-        ch_reference = fasta.map { _meta, file -> file }
-            .combine( fasta_fai.map { _meta, file -> file } )
-            .map { fa, fai -> [ [id:'genome'], fa, fai ] }
-
-        DORADO_BASECALLER (
+        BASECALLING (
             samplesheet,
-            ch_reference.first(),
-            DORADO_DOWNLOAD.out.model.first()
+            fasta,
+            fasta_fai,
+            fasta_gzi
         )
 
-        SAMTOOLS_SORT (
-            DORADO_BASECALLER.out.bam,
-            ch_reference.first(),
-            "bai"
-        )
-
-        ch_bams_for_merge = SAMTOOLS_SORT.out.bam
-            .map { _meta, bam -> bam } 
-            .collect()
-            .map { bams -> [ [id:'merged'], bams ] }
-
-        ch_reference = fasta.map { _meta, file -> file }
-            .combine( fasta_fai.map { _meta, file -> file } )
-            .combine( fasta_gzi.map { _meta, file -> file } )
-            .map { fa, fai, gzi -> [ [id:'genome'], fa, fai, gzi ] }
-
-        SAMTOOLS_MERGE (
-            ch_bams_for_merge,
-            ch_reference
-        )
-
-        SAMTOOLS_INDEX_1 ( SAMTOOLS_MERGE.out.bam )
-
-        bam_bai = SAMTOOLS_MERGE.out.bam.join(SAMTOOLS_INDEX_1.out.bai)
+        bam_bai = BASECALLING.out.bam_bai
 
     }
     else if (params.step == 'variant_calling') {
@@ -136,13 +96,14 @@ workflow VARIANTPIPELINE {
             ch_bed 
         )
 
-        BEDMETHYL_TO_BEDGRAPH( MODKIT_PILEUP.out.bedgz )
+        BEDMETHYL_TO_BEDGRAPH(
+            MODKIT_PILEUP.out.bedgz
+        )
 
         UCSC_BEDGRAPHTOBIGWIG(
             BEDMETHYL_TO_BEDGRAPH.out.bedGraph,
             chrom_sizes
         )
-
 
     }
 
@@ -240,39 +201,19 @@ workflow VARIANTPIPELINE {
 
         ch_vcf_tbi = merged_vcf.map { _meta, file -> file }
             .combine( merged_tbi.map { _meta, file -> file } )
-            .map { vcf, tbi -> [ [ id:'merged_vcf' ], vcf, tbi ] }
+            .map { vcf, tbi -> [ [ id:'chrX' ], vcf, tbi ] }
 
         ch_reference = fasta.map { _meta, file -> file }
             .combine( fasta_fai.map { _meta, file -> file } )
             .map { fa, fai -> [ [id:'genome'], fa, fai ] }
 
-        WHATSHAP_PHASE (
+        PHASING (
             ch_vcf_tbi,
             bam_bai,
-            ch_reference
-        )
-
-        ch_haplotag_input = WHATSHAP_PHASE.out.vcf.join(WHATSHAP_PHASE.out.tbi)
-            .combine(bam_bai)
-            .map { _meta_vcf, vcf, tbi, _meta_bam, bam, bai ->
-                
-                def new_meta = [id: 'phasing_files'] 
-
-                [ new_meta, vcf, tbi, bam, bai ]
-            }
-
-        WHATSHAP_HAPLOTAG (
-            ch_haplotag_input,
+            ch_reference,
             fasta,
-            fasta_fai,
-            true
+            fasta_fai
         )
-
-        SAMTOOLS_INDEX_2 ( WHATSHAP_HAPLOTAG.out.bam )
-
-        hap_bam_bai = WHATSHAP_HAPLOTAG.out.bam.join(SAMTOOLS_INDEX_2.out.bai)
-
-        WHATSHAP_SPLIT ( hap_bam_bai, WHATSHAP_HAPLOTAG.out.tsv )
 
     }
 
