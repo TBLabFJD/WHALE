@@ -12,7 +12,7 @@ process MODKIT_DMR {
     tuple val(meta2), path(fasta), path(fai)
 
     output:
-    tuple val("dmr"), path("*.bed"), emit: dmr_bed
+    tuple val(meta), path("*.bed"), emit: dmr_bed
     path "versions.yml"           , emit: versions
 
     script:

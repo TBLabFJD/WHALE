@@ -21,8 +21,9 @@ include { BASECALLING               } from '../subworkflows/local/basecalling'
 include { MODKIT_PILEUP             } from '../modules/nf-core/modkit/pileup'
 include { BEDMETHYL_TO_BEDGRAPH     } from '../modules/local/bedmethyl_to_bedgraph'
 include { UCSC_BEDGRAPHTOBIGWIG     } from '../modules/nf-core/ucsc/bedgraphtobigwig'  
-include { PHASING                   } from '../subworkflows/local/phasing'  
-
+include { PHASING                   } from '../subworkflows/local/phasing'
+include { SAM                       } from '../subworkflows/local/sam'
+include { SAMTOOLS_VIEW             } from '../modules/nf-core/samtools/view'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -45,10 +46,12 @@ workflow VARIANTPIPELINE {
     ch_versions = channel.empty()
     ch_multiqc_files = channel.empty()
 
+    ch_reference = fasta.map { _meta, file -> file }
+        .combine( fasta_fai.map { _meta, file -> file } )
+        .map { fa, fai -> [ [id:'genome'], fa, fai ] }
+
     if (params.step == 'mapping') {
-        FASTQC (
-            samplesheet
-        )
+        FASTQC (samplesheet)
         ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
         ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
@@ -58,24 +61,29 @@ workflow VARIANTPIPELINE {
             true,
             "bai",
             false,
-            false)
-    
-        bam_bai = MINIMAP2_ALIGN.out.bam.join(MINIMAP2_ALIGN.out.index) // channel: [ val(meta), path(bam), path(bai) ]
+            false
+        )
+        bam_bai = MINIMAP2_ALIGN.out.bam.join(MINIMAP2_ALIGN.out.index)
     }
     else if (params.step == 'basecalling') {
-        BASECALLING (
-            samplesheet,
-            fasta,
-            fasta_fai,
-            fasta_gzi
+        BASECALLING (samplesheet, fasta, fasta_fai, fasta_gzi)
+        bam_bai = BASECALLING.out.bam_bai
+    }
+    else if (params.step == 'variant_calling' || params.step == 'phasing') {
+        ch_crams = samplesheet.filter { _meta, file, _index -> file.name.endsWith('.cram') }
+        ch_bams  = samplesheet.filter { _meta, file, _index -> file.name.endsWith('.bam') }
+
+        SAMTOOLS_VIEW (
+            ch_crams,
+            ch_reference,
+            '',
+            '',
+            'bai'
         )
 
-        bam_bai = BASECALLING.out.bam_bai
+        bam_bai = ch_bams.mix(SAMTOOLS_VIEW.out.bam.join(SAMTOOLS_VIEW.out.bai))
+    }
 
-    }
-    else if (params.step == 'variant_calling') {
-        bam_bai = samplesheet
-    }
     else if (params.step == 'snv_annotation') {
         merged_vcf = samplesheet
     }
@@ -83,12 +91,73 @@ workflow VARIANTPIPELINE {
         merged_final_bed = samplesheet
     }
 
-    if (params.CG_methyl) {
-        ch_reference = fasta.map { _meta, file -> file }
-            .combine( fasta_fai.map { _meta, file -> file } )
-            .map { fa, fai -> [ [id:'genome'], fa, fai ] }
-        
-        ch_bed = channel.of([ [id:'none'], [] ])  // change it if you want to analyze a specific region 
+    //
+    // SUBWORKFLOW: Run Deepvariant, Clair3 & NanoCaller
+    //
+
+    if (params.snv_calling == true) {
+        SNV_CALLING (bam_bai, fasta, fasta_fai, fasta_gzi)
+        snv_calling_vcfs = SNV_CALLING.out.deepvariant_vcf_tbi.concat(SNV_CALLING.out.nanocaller_vcf_tbi, SNV_CALLING.out.clair3_vcf_tbi)
+    }
+
+    //
+    // SUBWORKFLOW: Run Merge SNV Calling
+    //
+
+    if (params.merge_snv == true) {
+        MERGE_SNV_CALLING (snv_calling_vcfs, fasta, fasta_fai)
+        merged_vcf = MERGE_SNV_CALLING.out.final_vcf
+        final_snv_vcf = MERGE_SNV_CALLING.out.final_vcf
+        final_snv_tbi = MERGE_SNV_CALLING.out.final_tbi
+    } else if (params.step == 'phasing' || params.step == 'snv_annotation') {
+        final_snv_vcf = samplesheet.map { meta, vcf, tbi -> [meta, vcf] }
+        final_snv_tbi = samplesheet.map { meta, vcf, tbi -> [meta, tbi] }
+    }
+
+    //
+    // PHASING AND DMR
+    //
+    def bam_for_sv_calling = bam_bai
+
+    if (params.phasing == true) {
+        ch_vcf_tbi = final_snv_vcf.join(final_snv_tbi)
+
+        PHASING (
+            ch_vcf_tbi,
+            bam_bai,
+            ch_reference,
+            fasta,
+            fasta_fai
+        )
+
+        bam_for_sv_calling = PHASING.out.haplotagged_bam_bai
+    }
+
+    //
+    // SUBWORKFLOW: Run Merge SV Calling
+    //
+
+    if (params.sv_calling == true) {
+        SV_CALLING (
+            bam_for_sv_calling,
+            fasta,
+            fasta_fai,
+            fasta_gzi
+        )
+    }
+
+    if (params.merge_sv == true) {
+        MERGE_SV_CALLING (
+            SV_CALLING.out.sniffles_vcf,
+            SV_CALLING.out.cutesv_vcf,
+            SV_CALLING.out.svim_vcf
+        )
+        merged_gt_bed = MERGE_SV_CALLING.out.merged_gt
+        merged_final_bed = MERGE_SV_CALLING.out.merged_final
+    }
+
+    if (params.CG_methyl && params.phasing == false) {
+        ch_bed = channel.of([ [id:'none'], [] ])  
 
         MODKIT_PILEUP(
             bam_bai,
@@ -104,117 +173,29 @@ workflow VARIANTPIPELINE {
             BEDMETHYL_TO_BEDGRAPH.out.bedGraph,
             chrom_sizes
         )
-
     }
 
-    //
-    // SUBWORKFLOW: Run Deepvariant, Clair3 & NanoCaller
-    //
-
-    if (params.snv_calling == true) {
-        SNV_CALLING (
-            bam_bai,
-            fasta,
-            fasta_fai,
-            fasta_gzi)
-        
-        snv_calling_vcfs = SNV_CALLING.out.deepvariant_vcf_tbi.concat(SNV_CALLING.out.nanocaller_vcf_tbi, SNV_CALLING.out.clair3_vcf_tbi)
-    }
-
-    //
-    // SUBWORKFLOW: Run Sniffles, CuteSV & SVIM
-    //
-
-    if (params.sv_calling == true) {
-        SV_CALLING (
-            bam_bai,
-            fasta,
-            fasta_fai,
-            fasta_gzi)
-    }
-
-    //
-    // SUBWORKFLOW: Run Merge SNV Calling
-    //
-    
-    if (params.merge_snv == true) {
-        MERGE_SNV_CALLING (
-            snv_calling_vcfs,
-            fasta,
-            fasta_fai
-        )
-
-        merged_vcf = MERGE_SNV_CALLING.out.final_vcf // channel: [ val(meta), path(merged_vcf) ]
-    }
-    
-    //
-    // SUBWORKFLOW: Run Merge SV Calling
-    //
-    
-    if (params.merge_sv == true) {
-        MERGE_SV_CALLING (
-            SV_CALLING.out.sniffles_vcf,
-            SV_CALLING.out.cutesv_vcf,
-            SV_CALLING.out.svim_vcf
-        )
-
-        merged_gt_bed = MERGE_SV_CALLING.out.merged_gt
-        merged_final_bed = MERGE_SV_CALLING.out.merged_final
-    }
-
-    //
-    // SUBWORKFLOW: Run SNV Annotation
-    //
-    
+    // ---------------------------------------------------------
+    // VARIANT ANNOTATION
+    // ---------------------------------------------------------
     if (params.snv_annotation == true) {
-        SNV_ANNOTATION (
-            merged_vcf, 
-            fasta
-        )
+        SNV_ANNOTATION (merged_vcf, fasta)
     }
 
-    //
-    // SUBWORKFLOW: Run SV Annotation
-    //
-    
     if (params.sv_annotation == true) {
         if (params.sv_database == true) {
-            SV_ANNOTATION (
-                merged_gt_bed
-            )
+            SV_ANNOTATION (merged_gt_bed)
         }
         else {
-            SV_ANNOTATION (
-                merged_final_bed
-            )
+            SV_ANNOTATION (merged_final_bed)
         }
     }
 
-    //
-    // PHASING
-    //
-
-    if (params.phasing == true) {
-
-        merged_vcf = MERGE_SNV_CALLING.out.final_vcf
-        merged_tbi = MERGE_SNV_CALLING.out.final_tbi
-
-        ch_vcf_tbi = merged_vcf.map { _meta, file -> file }
-            .combine( merged_tbi.map { _meta, file -> file } )
-            .map { vcf, tbi -> [ [ id:'chrX' ], vcf, tbi ] }
-
-        ch_reference = fasta.map { _meta, file -> file }
-            .combine( fasta_fai.map { _meta, file -> file } )
-            .map { fa, fai -> [ [id:'genome'], fa, fai ] }
-
-        PHASING (
-            ch_vcf_tbi,
-            bam_bai,
-            ch_reference,
-            fasta,
-            fasta_fai
+    if (params.step == 'sam') {
+        SAM (
+            samplesheet,
+            ch_reference
         )
-
     }
 
     //
@@ -228,37 +209,20 @@ workflow VARIANTPIPELINE {
             newLine: true
         ).set { ch_collated_versions }
 
-    //
-    // MODULE: MultiQC
-    //
-    ch_multiqc_config        = channel.fromPath(
-        "$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-    ch_multiqc_custom_config = params.multiqc_config ?
-        channel.fromPath(params.multiqc_config, checkIfExists: true) :
-        channel.empty()
-    ch_multiqc_logo          = params.multiqc_logo ?
-        channel.fromPath(params.multiqc_logo, checkIfExists: true) :
-        channel.empty()
+    ch_multiqc_config = channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+    ch_multiqc_custom_config = params.multiqc_config ? channel.fromPath(params.multiqc_config, checkIfExists: true) : channel.empty()
+    ch_multiqc_logo = params.multiqc_logo ? channel.fromPath(params.multiqc_logo, checkIfExists: true) : channel.empty()
 
-    summary_params      = paramsSummaryMap(
-        workflow, parameters_schema: "nextflow_schema.json")
+    summary_params = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
     ch_workflow_summary = channel.value(paramsSummaryMultiqc(summary_params))
 
-    ch_multiqc_custom_methods_description = params.multiqc_methods_description ?
-        file(params.multiqc_methods_description, checkIfExists: true) :
-        file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-    ch_methods_description                = channel.value(
-        methodsDescriptionText(ch_multiqc_custom_methods_description))
+    ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
+    ch_methods_description = channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
 
-    ch_multiqc_files = ch_multiqc_files.mix(
-        ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(ch_collated_versions)
-    ch_multiqc_files = ch_multiqc_files.mix(
-        ch_methods_description.collectFile(
-            name: 'methods_description_mqc.yaml',
-            sort: true
-        )
-    )
+    ch_multiqc_files = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: true))
+    
     MULTIQC (
         ch_multiqc_files.toSortedList(),
         ch_multiqc_config.toList(),

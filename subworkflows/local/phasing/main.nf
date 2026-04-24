@@ -29,16 +29,9 @@ workflow PHASING {
 
     ch_haplotag_input = WHATSHAP_PHASE.out.vcf
         .join(WHATSHAP_PHASE.out.tbi)
-        .map { meta, vcf, tbi -> 
-            [ meta.id, meta, vcf, tbi ]
-        }
-        .join( 
-            bam_bai.map { meta, bam, bai -> [ meta.id, bam, bai ] },
-            by: 0 // Une basándose únicamente en el meta.id
-        )
-        .map { _id, meta, vcf, tbi, bam, bai ->
-            [ meta, vcf, tbi, bam, bai ]
-        }
+        .map { meta, vcf, tbi -> [ meta.id, meta, vcf, tbi ] }
+        .join( bam_bai.map { meta, bam, bai -> [ meta.id, bam, bai ] }, by: 0 )
+        .map { _id, meta, vcf, tbi, bam, bai -> [ meta, vcf, tbi, bam, bai ] }
 
     WHATSHAP_HAPLOTAG (
         ch_haplotag_input,
@@ -82,16 +75,12 @@ workflow PHASING {
 
     ch_bam_bai_haplotypes = ch_bams_to_index.join(SAMTOOLS_INDEX_2.out.bai)
 
-    ch_reference = fasta.map { _meta, file -> file }
-        .combine( fasta_fai.map { _meta, file -> file } )
-        .map { fa, fai -> [ [id:'genome'], fa, fai ] }
-
-    ch_bed = channel.of([ [id:'none'], [] ]) 
+    ch_bed = channel.value([ [id:'none'], [] ]) 
 
     MODKIT_PILEUP ( 
         ch_bam_bai_haplotypes, 
-        ch_reference.first(), 
-        ch_bed.first()
+        ch_reference.first(),
+        ch_bed
     )
 
     TABIX_TABIX (
@@ -105,23 +94,13 @@ workflow PHASING {
         true
     )
 
-/*     ch_methphaser_input = hap_bam_bai
-        .join( WHATSHAP_PHASE.out.vcf )
-        .join( WHATSHAP_PHASE.out.tbi )
-        .join( WHATSHAP_STATS.out.gtf )
-        .map { meta, bam, bai, vcf, tbi, gtf ->
-            [ meta, bam, bai, vcf, tbi, gtf ]
-        } */
-
     ch_bed_with_tbi = MODKIT_PILEUP.out.bedgz
         .join(TABIX_TABIX.out.tbi)
-
 
     ch_bed_with_tbi.branch {
         h1: it[0].id.endsWith('h1')
         h2: it[0].id.endsWith('h2')
     }.set { ch_haplotypes }
-
 
     ch_dmr_input = ch_haplotypes.h1
         .map { meta, bed, tbi -> [ meta.id.replaceAll('_h1$', ''), bed, tbi ] } 
@@ -139,9 +118,9 @@ workflow PHASING {
     )
 
     emit:
-    bedgz = MODKIT_PILEUP.out.bedgz
-    tbi = TABIX_TABIX.out.tbi
-
+    dmr_bed = MODKIT_DMR.out.dmr_bed
+    pileup_bedgz = MODKIT_PILEUP.out.bedgz
+    pileup_tbi = TABIX_TABIX.out.tbi
+    phased_vcf  = WHATSHAP_PHASE.out.vcf
+    haplotagged_bam_bai = hap_bam_bai 
 }
-
-
