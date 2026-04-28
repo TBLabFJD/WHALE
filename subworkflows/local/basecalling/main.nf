@@ -8,8 +8,7 @@ workflow BASECALLING {
 
     take:
     samplesheet
-    fasta
-    fasta_fai
+    ch_reference
     fasta_gzi
 
     main:
@@ -20,31 +19,25 @@ workflow BASECALLING {
 
     DORADO_DOWNLOAD ( model_ch )
 
-    ch_reference = fasta.map { _meta, file -> file }
-        .combine( fasta_fai.map { _meta, file -> file } )
-        .map { fa, fai -> [ [id:'genome'], fa, fai ] }
-
     DORADO_BASECALLER (
         samplesheet,
-        ch_reference.first(),
+        ch_reference,
         DORADO_DOWNLOAD.out.model.first()
     )
 
     SAMTOOLS_SORT (
         DORADO_BASECALLER.out.bam,
-        ch_reference.first(),
+        ch_reference,
         "bai"
     )
 
     ch_bams_for_merge = SAMTOOLS_SORT.out.bam
-        .map { _meta, bam -> bam } 
-        .collect()
-        .map { bams -> [ [id:'merged'], bams ] }
+        .groupTuple() // it merges those BAMs with the same ID
 
-    ch_reference = fasta.map { _meta, file -> file }
-        .combine( fasta_fai.map { _meta, file -> file } )
-        .combine( fasta_gzi.map { _meta, file -> file } )
+    ch_reference = ch_reference.map {_meta, fa, fai -> [ fa, fai ] }
+        .combine( fasta_gzi.map { _meta, gzi -> gzi } )
         .map { fa, fai, gzi -> [ [id:'genome'], fa, fai, gzi ] }
+        .first()
 
     SAMTOOLS_MERGE (
         ch_bams_for_merge,
