@@ -12,12 +12,12 @@ process MODKIT_DMR {
     tuple val(meta2), path(fasta), path(fai)
 
     output:
-    tuple val(meta), path("*.bed"), emit: dmr_bed
+    tuple val(meta), path("*.bed"), emit: bed
     path "versions.yml"           , emit: versions
 
     script:
     def args        = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}_asm_dmr"
+    def prefix = task.ext.prefix ?: "${meta.id}_regions"
 
     """
     modkit dmr pair \\
