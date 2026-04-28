@@ -94,8 +94,6 @@ workflow PIPELINE_INITIALISATION {
                     return [ meta + [ data_type:'bed' ], bed ]
                 } else if (pod5) {
                     return [ meta + [ data_type:'pod5' ], pod5 ]
-                } else if (tsv) {
-                    return [ meta + [ data_type:'bam' ], bam, bai, tsv ]
                 }
         }
         //.groupTuple().view()

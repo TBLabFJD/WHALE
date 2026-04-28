@@ -14,13 +14,16 @@ include { MODKIT_DMR                         } from '../../../modules/local/modk
 workflow PHASING {
 
     take:
-    ch_vcf_tbi
-    bam_bai
+    ch_phasing_input
     ch_reference
     fasta
     fasta_fai
 
     main:
+
+    ch_vcf_tbi = ch_phasing_input.map { meta, vcf, tbi, _bam, _bai -> [ meta, vcf, tbi ] }
+    bam_bai    = ch_phasing_input.map { meta, _vcf, _tbi, bam, bai -> [ meta, bam, bai ] }
+
     WHATSHAP_PHASE (
         ch_vcf_tbi,
         bam_bai,
@@ -75,18 +78,6 @@ workflow PHASING {
 
     ch_bam_bai_haplotypes = ch_bams_to_index.join(SAMTOOLS_INDEX_2.out.bai)
 
-    ch_bed = channel.value([ [id:'none'], [] ]) 
-
-    MODKIT_PILEUP ( 
-        ch_bam_bai_haplotypes, 
-        ch_reference.first(),
-        ch_bed
-    )
-
-    TABIX_TABIX (
-        MODKIT_PILEUP.out.bedgz
-    )
-
     WHATSHAP_STATS (
         WHATSHAP_PHASE.out.vcf,
         false,
@@ -94,33 +85,8 @@ workflow PHASING {
         true
     )
 
-    ch_bed_with_tbi = MODKIT_PILEUP.out.bedgz
-        .join(TABIX_TABIX.out.tbi)
-
-    ch_bed_with_tbi.branch {
-        h1: it[0].id.endsWith('h1')
-        h2: it[0].id.endsWith('h2')
-    }.set { ch_haplotypes }
-
-    ch_dmr_input = ch_haplotypes.h1
-        .map { meta, bed, tbi -> [ meta.id.replaceAll('_h1$', ''), bed, tbi ] } 
-        .join(
-            ch_haplotypes.h2.map { meta, bed, tbi -> [ meta.id.replaceAll('_h2$', ''), bed, tbi ] }
-        )
-        .map { sample_id, h1_bed, h1_tbi, h2_bed, h2_tbi ->
-            def new_meta = [ id: sample_id, single_end: false ]
-            [ new_meta, h1_bed, h1_tbi, h2_bed, h2_tbi ]
-        }
-
-    MODKIT_DMR (
-        ch_dmr_input,
-        ch_reference.first()
-    )
-
     emit:
-    dmr_bed = MODKIT_DMR.out.dmr_bed
-    pileup_bedgz = MODKIT_PILEUP.out.bedgz
-    pileup_tbi = TABIX_TABIX.out.tbi
     phased_vcf  = WHATSHAP_PHASE.out.vcf
-    haplotagged_bam_bai = hap_bam_bai 
+    haplotagged_bam_bai = hap_bam_bai
+    ch_bam_bai_haplotypes = ch_bam_bai_haplotypes
 }

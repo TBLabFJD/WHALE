@@ -22,7 +22,7 @@ include { MODKIT_PILEUP             } from '../modules/nf-core/modkit/pileup'
 include { BEDMETHYL_TO_BEDGRAPH     } from '../modules/local/bedmethyl_to_bedgraph'
 include { UCSC_BEDGRAPHTOBIGWIG     } from '../modules/nf-core/ucsc/bedgraphtobigwig'  
 include { PHASING                   } from '../subworkflows/local/phasing'
-include { SAM                       } from '../subworkflows/local/sam'
+include { ASM                       } from '../subworkflows/local/asm'
 include { SAMTOOLS_VIEW             } from '../modules/nf-core/samtools/view'
 
 /*
@@ -49,9 +49,13 @@ workflow VARIANTPIPELINE {
     ch_reference = fasta.map { _meta, file -> file }
         .combine( fasta_fai.map { _meta, file -> file } )
         .map { fa, fai -> [ [id:'genome'], fa, fai ] }
+        .first()
 
     if (params.step == 'mapping') {
-        FASTQC (samplesheet)
+        FASTQC (
+            samplesheet
+        )
+
         ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
         ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
@@ -66,22 +70,16 @@ workflow VARIANTPIPELINE {
         bam_bai = MINIMAP2_ALIGN.out.bam.join(MINIMAP2_ALIGN.out.index)
     }
     else if (params.step == 'basecalling') {
-        BASECALLING (samplesheet, fasta, fasta_fai, fasta_gzi)
+        BASECALLING (
+            samplesheet,
+            ch_reference,
+            fasta_gzi
+        )
+
         bam_bai = BASECALLING.out.bam_bai
     }
     else if (params.step == 'variant_calling' || params.step == 'phasing') {
-        ch_crams = samplesheet.filter { _meta, file, _index -> file.name.endsWith('.cram') }
-        ch_bams  = samplesheet.filter { _meta, file, _index -> file.name.endsWith('.bam') }
-
-        SAMTOOLS_VIEW (
-            ch_crams,
-            ch_reference,
-            '',
-            '',
-            'bai'
-        )
-
-        bam_bai = ch_bams.mix(SAMTOOLS_VIEW.out.bam.join(SAMTOOLS_VIEW.out.bai))
+        bam_bai = samplesheet
     }
 
     else if (params.step == 'snv_annotation') {
@@ -96,7 +94,13 @@ workflow VARIANTPIPELINE {
     //
 
     if (params.snv_calling == true) {
-        SNV_CALLING (bam_bai, fasta, fasta_fai, fasta_gzi)
+        SNV_CALLING (
+            bam_bai,
+            fasta,
+            fasta_fai,
+            fasta_gzi
+        )
+
         snv_calling_vcfs = SNV_CALLING.out.deepvariant_vcf_tbi.concat(SNV_CALLING.out.nanocaller_vcf_tbi, SNV_CALLING.out.clair3_vcf_tbi)
     }
 
@@ -105,13 +109,18 @@ workflow VARIANTPIPELINE {
     //
 
     if (params.merge_snv == true) {
-        MERGE_SNV_CALLING (snv_calling_vcfs, fasta, fasta_fai)
+        MERGE_SNV_CALLING (
+            snv_calling_vcfs,
+            fasta,
+            fasta_fai
+        )
+
         merged_vcf = MERGE_SNV_CALLING.out.final_vcf
         final_snv_vcf = MERGE_SNV_CALLING.out.final_vcf
         final_snv_tbi = MERGE_SNV_CALLING.out.final_tbi
     } else if (params.step == 'phasing' || params.step == 'snv_annotation') {
-        final_snv_vcf = samplesheet.map { meta, vcf, tbi -> [meta, vcf] }
-        final_snv_tbi = samplesheet.map { meta, vcf, tbi -> [meta, tbi] }
+        final_snv_vcf = samplesheet.map { meta, vcf, _tbi -> [meta, vcf] }
+        final_snv_tbi = samplesheet.map { meta, _vcf, tbi -> [meta, tbi] }
     }
 
     //
@@ -122,16 +131,26 @@ workflow VARIANTPIPELINE {
     if (params.phasing == true) {
         ch_vcf_tbi = final_snv_vcf.join(final_snv_tbi)
 
+        ch_phasing_input = ch_vcf_tbi.join(bam_bai) // now the bam and tbi files are grouped by the same meta      
+
         PHASING (
-            ch_vcf_tbi,
-            bam_bai,
+            ch_phasing_input,
             ch_reference,
             fasta,
             fasta_fai
         )
 
         bam_for_sv_calling = PHASING.out.haplotagged_bam_bai
+        ch_bam_bai_haplotypes = PHASING.out.ch_bam_bai_haplotypes
     }
+
+    if (params.asm == true) {
+        ASM (
+            ch_bam_bai_haplotypes,
+            ch_reference
+        )
+    }
+
 
     //
     // SUBWORKFLOW: Run Merge SV Calling
@@ -157,7 +176,7 @@ workflow VARIANTPIPELINE {
     }
 
     if (params.CG_methyl && params.phasing == false) {
-        ch_bed = channel.of([ [id:'none'], [] ])  
+        ch_bed = channel.value([ [id:'none'], [] ])  
 
         MODKIT_PILEUP(
             bam_bai,
@@ -179,23 +198,23 @@ workflow VARIANTPIPELINE {
     // VARIANT ANNOTATION
     // ---------------------------------------------------------
     if (params.snv_annotation == true) {
-        SNV_ANNOTATION (merged_vcf, fasta)
+        SNV_ANNOTATION (
+            merged_vcf, 
+            fasta
+        )
     }
 
     if (params.sv_annotation == true) {
         if (params.sv_database == true) {
-            SV_ANNOTATION (merged_gt_bed)
+            SV_ANNOTATION (
+                merged_gt_bed
+            )
         }
         else {
-            SV_ANNOTATION (merged_final_bed)
+            SV_ANNOTATION (
+                merged_final_bed
+            )
         }
-    }
-
-    if (params.step == 'sam') {
-        SAM (
-            samplesheet,
-            ch_reference
-        )
     }
 
     //
