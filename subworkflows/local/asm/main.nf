@@ -2,13 +2,14 @@ include { MODKIT_PILEUP                      } from '../../../modules/nf-core/mo
 include { TABIX_TABIX                        } from '../../../modules/nf-core/tabix/tabix'
 include { TABIX_BGZIP                        } from '../../../modules/nf-core/tabix/bgzip'
 include { MODKIT_DMR                         } from '../../../modules/local/modkit/dmr'
-include { FILTER_DMR                         } from '../../../modules/local/filter_dmr'
+include { DMR_FILTERING                         } from '../../../modules/local/dmr_filtering'
 
 workflow ASM {
 
     take:
     ch_bam_bai_haplotypes
     ch_reference
+    chrom_sizes
 
     main:
 
@@ -47,12 +48,14 @@ workflow ASM {
         ch_reference.first()
     )
 
-    FILTER_DMR (
-        MODKIT_DMR.out.bed
+    DMR_FILTERING (
+        MODKIT_DMR.out.bed,
+        chrom_sizes,
+        file(params.promoters_bed)
     )
 
     emit:
-    dmr_bed = FILTER_DMR.out.dmr_bed
+    dmr_bed = DMR_FILTERING.out.dmr_bed
     pileup_bedgz = MODKIT_PILEUP.out.bedgz
     pileup_tbi = TABIX_TABIX.out.tbi
 }

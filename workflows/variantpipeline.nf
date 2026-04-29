@@ -23,7 +23,6 @@ include { BEDMETHYL_TO_BEDGRAPH     } from '../modules/local/bedmethyl_to_bedgra
 include { UCSC_BEDGRAPHTOBIGWIG     } from '../modules/nf-core/ucsc/bedgraphtobigwig'  
 include { PHASING                   } from '../subworkflows/local/phasing'
 include { ASM                       } from '../subworkflows/local/asm'
-include { SAMTOOLS_VIEW             } from '../modules/nf-core/samtools/view'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -147,7 +146,8 @@ workflow VARIANTPIPELINE {
     if (params.asm == true) {
         ASM (
             ch_bam_bai_haplotypes,
-            ch_reference
+            ch_reference,
+            chrom_sizes
         )
     }
 
