@@ -10,15 +10,14 @@ workflow ASM {
     ch_bam_bai_haplotypes
     ch_reference
     chrom_sizes
+    ch_intervals
 
     main:
-
-    ch_bed = channel.value([ [id:'none'], [] ]) 
 
     MODKIT_PILEUP ( 
         ch_bam_bai_haplotypes, 
         ch_reference.first(),
-        ch_bed
+        ch_intervals
     )
 
     TABIX_TABIX (
@@ -51,7 +50,8 @@ workflow ASM {
     DMR_FILTERING (
         MODKIT_DMR.out.bed,
         chrom_sizes,
-        file(params.promoters_bed)
+        file(params.promoters_bed),
+        file(params.enhancers_bed)
     )
 
     emit:
