@@ -23,6 +23,7 @@ include { BEDMETHYL_TO_BEDGRAPH     } from '../modules/local/bedmethyl_to_bedgra
 include { UCSC_BEDGRAPHTOBIGWIG     } from '../modules/nf-core/ucsc/bedgraphtobigwig'  
 include { PHASING                   } from '../subworkflows/local/phasing'
 include { ASM                       } from '../subworkflows/local/asm'
+include { BAM_STATS                 } from '../subworkflows/local/bam_stats'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,6 +50,14 @@ workflow VARIANTPIPELINE {
         .combine( fasta_fai.map { _meta, file -> file } )
         .map { fa, fai -> [ [id:'genome'], fa, fai ] }
         .first()
+
+    ch_reads = params.reads ?
+        channel.value([ [id: 'selected_reads'], params.reads ]) : // in case we want to extract cercain reads
+        channel.value([ [id: 'selected_reads'], [] ])
+    ch_intervals = params.intervals ?
+        // in case we want to extract cercain intervals
+        channel.value([ [id: 'selected_intervals'], params.intervals ]) :
+        channel.value([ [id: 'selected_intervals'], [] ])
 
     if (params.step == 'mapping') {
         FASTQC (
@@ -93,6 +102,9 @@ workflow VARIANTPIPELINE {
     //
 
     if (params.snv_calling == true) {
+
+        samplesheet.view()
+
         SNV_CALLING (
             bam_bai,
             fasta,
@@ -147,7 +159,8 @@ workflow VARIANTPIPELINE {
         ASM (
             ch_bam_bai_haplotypes,
             ch_reference,
-            chrom_sizes
+            chrom_sizes,
+            ch_intervals
         )
     }
 
@@ -175,28 +188,10 @@ workflow VARIANTPIPELINE {
         merged_final_bed = MERGE_SV_CALLING.out.merged_final
     }
 
-    if (params.CG_methyl && params.phasing == false) {
-        ch_bed = channel.value([ [id:'none'], [] ])  
-
-        MODKIT_PILEUP(
-            bam_bai,
-            ch_reference,
-            ch_bed 
-        )
-
-        BEDMETHYL_TO_BEDGRAPH(
-            MODKIT_PILEUP.out.bedgz
-        )
-
-        UCSC_BEDGRAPHTOBIGWIG(
-            BEDMETHYL_TO_BEDGRAPH.out.bedGraph,
-            chrom_sizes
-        )
-    }
-
-    // ---------------------------------------------------------
+    // 
     // VARIANT ANNOTATION
-    // ---------------------------------------------------------
+    //
+
     if (params.snv_annotation == true) {
         SNV_ANNOTATION (
             merged_vcf, 
@@ -215,6 +210,20 @@ workflow VARIANTPIPELINE {
                 merged_final_bed
             )
         }
+    }
+
+    //
+    // BAM STATS
+    //
+
+    if (bam_bai) {
+
+        BAM_STATS (
+            bam_bai,
+            ch_reference,
+            ch_reads,
+            ch_intervals
+        )
     }
 
     //
