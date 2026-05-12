@@ -21,19 +21,15 @@ workflow PHASING {
 
     main:
 
-    ch_vcf_tbi = ch_phasing_input.map { meta, vcf, tbi, _bam, _bai -> [ meta, vcf, tbi ] }
-    bam_bai    = ch_phasing_input.map { meta, _vcf, _tbi, bam, bai -> [ meta, bam, bai ] }
-
     WHATSHAP_PHASE (
-        ch_vcf_tbi,
-        bam_bai,
+        ch_phasing_input,
         ch_reference
     )
 
     ch_haplotag_input = WHATSHAP_PHASE.out.vcf
         .join(WHATSHAP_PHASE.out.tbi)
         .map { meta, vcf, tbi -> [ meta.id, meta, vcf, tbi ] }
-        .join( bam_bai.map { meta, bam, bai -> [ meta.id, bam, bai ] }, by: 0 )
+        .join( ch_phasing_input.map { meta, _vcf, _tbi, bam, bai -> [ meta.id, bam, bai ] }, by: 0 )
         .map { _id, meta, vcf, tbi, bam, bai -> [ meta, vcf, tbi, bam, bai ] }
 
     WHATSHAP_HAPLOTAG (
@@ -47,15 +43,18 @@ workflow PHASING {
         WHATSHAP_HAPLOTAG.out.bam
     )
 
-    hap_bam_bai = WHATSHAP_HAPLOTAG.out.bam.join(SAMTOOLS_INDEX_1.out.bai)
-
     TABIX_BGZIP (
         WHATSHAP_HAPLOTAG.out.tsv
     )
 
+    hap_bam_bai = WHATSHAP_HAPLOTAG.out.bam
+        .join(SAMTOOLS_INDEX_1.out.bai)
+
+    ch_whatshap_split = hap_bam_bai
+        .join(TABIX_BGZIP.out.output)
+
     WHATSHAP_SPLIT (
-        hap_bam_bai,
-        TABIX_BGZIP.out.output
+        ch_whatshap_split
     )
 
     ch_bam_h1 = WHATSHAP_SPLIT.out.bam_h1.map { meta, bam ->
@@ -80,7 +79,7 @@ workflow PHASING {
 
     WHATSHAP_STATS (
         WHATSHAP_PHASE.out.vcf,
-        false,
+        true,
         true,
         true
     )

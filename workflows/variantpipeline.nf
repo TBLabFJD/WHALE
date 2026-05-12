@@ -17,10 +17,7 @@ include { MERGE_SNV_CALLING         } from '../subworkflows/local/merge_snv_call
 include { MERGE_SV_CALLING          } from '../subworkflows/local/merge_sv_calling'
 include { SNV_ANNOTATION            } from '../subworkflows/local/snv_annotation'
 include { SV_ANNOTATION             } from '../subworkflows/local/sv_annotation'
-include { BASECALLING               } from '../subworkflows/local/basecalling' 
-include { MODKIT_PILEUP             } from '../modules/nf-core/modkit/pileup'
-include { BEDMETHYL_TO_BEDGRAPH     } from '../modules/local/bedmethyl_to_bedgraph'
-include { UCSC_BEDGRAPHTOBIGWIG     } from '../modules/nf-core/ucsc/bedgraphtobigwig'  
+include { BASECALLING               } from '../subworkflows/local/basecalling'  
 include { PHASING                   } from '../subworkflows/local/phasing'
 include { ASM                       } from '../subworkflows/local/asm'
 include { BAM_STATS                 } from '../subworkflows/local/bam_stats'
@@ -102,8 +99,6 @@ workflow VARIANTPIPELINE {
     //
 
     if (params.snv_calling == true) {
-
-        samplesheet.view()
 
         SNV_CALLING (
             bam_bai,
@@ -224,6 +219,8 @@ workflow VARIANTPIPELINE {
             ch_reads,
             ch_intervals
         )
+
+        // ch_multiqc_files = ch_multiqc_files.mix(BAM_STATS.out.nanostat_report)
     }
 
     //

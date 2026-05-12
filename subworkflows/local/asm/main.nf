@@ -16,7 +16,7 @@ workflow ASM {
 
     MODKIT_PILEUP ( 
         ch_bam_bai_haplotypes, 
-        ch_reference.first(),
+        ch_reference,
         ch_intervals
     )
 
@@ -44,11 +44,11 @@ workflow ASM {
 
     MODKIT_DMR (
         ch_dmr_input,
-        ch_reference.first()
+        ch_reference
     )
 
     DMR_FILTERING (
-        MODKIT_DMR.out.bed,
+        MODKIT_DMR.out.differences_bed,
         chrom_sizes,
         file(params.promoters_bed),
         file(params.enhancers_bed)
