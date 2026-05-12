@@ -29,6 +29,16 @@
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open"
                 },
+                "reads": {
+                    "type": "string",
+                    "description": "Read names to be extracted and used by the analysis",
+                    "fa_icon": "fas fa-file-code"
+                },
+                "intervals": {
+                    "type": "string",
+                    "description": "Coordinates of target intervals (e.g. BED file) to restrict analysis.",
+                    "fa_icon": "fas fa-align-justify"
+                },
                 "email": {
                     "type": "string",
                     "description": "Email address for completion summary.",
@@ -88,6 +98,10 @@
                 "assembly": {
                     "type": "string",
                     "description": "Genome assembly."
+                },
+                "chrom_sizes": {
+                    "type": "string",
+                    "description": "Path to chromosome sizes file."
                 }
             }
         },
@@ -380,6 +394,28 @@
                 }
             }
         },
+        "asm_options": {
+            "title": "Allele-Specific Methylation (ASM) Options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Parameters for the ASM downstream analysis.",
+            "properties": {
+                "asm": {
+                    "type": "boolean",
+                    "description": "Enable Allele-Specific Methylation workflow."
+                },
+                "promoters_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to the BED file containing promoter coordinates."
+                },
+                "enhancers_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to the BED file containing enhancer coordinates."
+                }
+            }
+        },
         "singularity_images": {
             "title": "Singularity images",
             "type": "object",
@@ -611,6 +647,9 @@
             "$ref": "#/definitions/annotation_of_svs"
         },
         {
+            "$ref": "#/definitions/asm_options"
+        },
+        {
             "$ref": "#/definitions/singularity_images"
         },
         {
@@ -628,22 +667,17 @@
             "type": "string",
             "default": "cpu"
         },
-        "chrom_sizes": {
-            "type": "string"
-        },
-        "CG_methyl": {
-            "type": "boolean"
-        },
         "dorado_model": {
             "type": "string",
             "default": "dna_r10.4.1_e8.2_400bps_hac@v5.2.0"
         },
         "dorado_models_dir": {
             "type": "string",
-            "default": "/mnt/tblab/barbosa/resources/dorado_models/"
+            "default": "../dorado_models/"
         },
         "phasing": {
-            "type": "boolean"
+            "type": "boolean",
+            "default": false
         }
     }
 }
