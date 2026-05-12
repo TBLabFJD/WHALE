@@ -36,14 +36,10 @@ nextflow_process {
                 ])
                 input[1] = Channel.of([
                     [ id : 'hg38' ],
-                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/genome/genome.fasta', checkIfExists: true)
-                ])
-                input[2] = Channel.of([
-                    [ id : 'hg38' ],
+                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/genome/genome.fasta', checkIfExists: true),
                     file(params.modules_testdata_base_path + 'genomics/homo_sapiens/genome/genome.fasta.fai', checkIfExists: true)
                 ])
-                input[3] = "cpu"
-                input[4] = DORADO_DOWNLOAD.out.model
+                input[2] = DORADO_DOWNLOAD.out.model
                 """
             }
         }
