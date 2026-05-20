@@ -1,8 +1,14 @@
-include { MODKIT_PILEUP                      } from '../../../modules/nf-core/modkit/pileup'
-include { TABIX_TABIX                        } from '../../../modules/nf-core/tabix/tabix'
-include { TABIX_BGZIP                        } from '../../../modules/nf-core/tabix/bgzip'
-include { MODKIT_DMR                         } from '../../../modules/local/modkit/dmr'
-include { DMR_FILTERING                         } from '../../../modules/local/dmr_filtering'
+include { MODKIT_PILEUP              } from '../../../modules/nf-core/modkit/pileup'
+include { TABIX_TABIX                } from '../../../modules/nf-core/tabix/tabix'
+include { TABIX_BGZIP                } from '../../../modules/nf-core/tabix/bgzip'
+include { MODKIT_DMR                 } from '../../../modules/local/modkit/dmr'
+include { DMR_FILTERING              } from '../../../modules/local/dmr_filtering'
+include { DMR_cCRE                   } from '../../../modules/local/dmr_cCRE'
+include { ANNOTSV_INSTALLANNOTATIONS } from '../../../modules/nf-core/annotsv/installannotations/main'
+include { ANNOTSV_ANNOTSV            } from '../../../modules/nf-core/annotsv/annotsv/main' 
+include { ANNOTSV_TSV_FILTERING      } from '../../../modules/local/annotsv_tsv_filtering' 
+include { MERGE_DMR_FILES            } from '../../../modules/local/merge_dmr_files'
+
 
 workflow ASM {
 
@@ -49,9 +55,46 @@ workflow ASM {
 
     DMR_FILTERING (
         MODKIT_DMR.out.differences_bed,
-        chrom_sizes,
+        chrom_sizes
+    )
+
+    DMR_cCRE (
+        DMR_FILTERING.out.dmr_bed,
         file(params.promoters_bed),
         file(params.enhancers_bed)
+    )
+
+    if (params.annotsv_annotations == 'install') {
+        ANNOTSV_INSTALLANNOTATIONS()
+        
+        ch_annotations_dir = ANNOTSV_INSTALLANNOTATIONS.out.annotations.map { it -> [ [id:'annotsv_db'], it ] }
+    } else {
+        ch_annotations_dir = params.annotsv_annotations ? channel.fromPath(params.annotsv_annotations).map{ it -> [ [id:it.baseName], it ] }.first() : channel.empty()
+    }
+
+    ch_transcripts = channel.value( [ [id: 'empty'], [] ] ) // whithout parameter because it must be always empty
+
+    ch_filtered_dmr = DMR_FILTERING.out.dmr_bed.filter { _meta, bed_file -> 
+        bed_file.size() > 0 
+    }
+
+    ANNOTSV_ANNOTSV (
+        ch_filtered_dmr, // only those which are not empty
+        ch_annotations_dir,
+        ch_transcripts
+    )
+
+    ANNOTSV_TSV_FILTERING (
+        ANNOTSV_ANNOTSV.out.tsv
+    )
+
+    ch_files_to_merge = ANNOTSV_TSV_FILTERING.out.filtered_tsv
+        .join(DMR_FILTERING.out.dmr_bed)
+        .join(DMR_cCRE.out.promoters_bed)
+        .join(DMR_cCRE.out.enhancers_bed)
+
+    MERGE_DMR_FILES (
+        ch_files_to_merge
     )
 
     emit:
