@@ -17,7 +17,9 @@ workflow BASECALLING {
         params.dorado_model
     ])
 
-    DORADO_DOWNLOAD ( model_ch )
+    DORADO_DOWNLOAD (
+        model_ch
+    )
 
     DORADO_BASECALLER (
         samplesheet,
@@ -32,7 +34,7 @@ workflow BASECALLING {
     )
 
     ch_bams_for_merge = SAMTOOLS_SORT.out.bam
-        .groupTuple() // it merges those BAMs with the same ID
+        .groupTuple() // Group the files by ID
 
     ch_reference = ch_reference.map {_meta, fa, fai -> [ fa, fai ] }
         .combine( fasta_gzi.map { _meta, gzi -> gzi } )
@@ -44,7 +46,9 @@ workflow BASECALLING {
         ch_reference
     )
 
-    SAMTOOLS_INDEX ( SAMTOOLS_MERGE.out.bam )
+    SAMTOOLS_INDEX (
+        SAMTOOLS_MERGE.out.bam
+    )
 
     emit:
     bam_bai = SAMTOOLS_MERGE.out.bam.join(SAMTOOLS_INDEX.out.bai)
