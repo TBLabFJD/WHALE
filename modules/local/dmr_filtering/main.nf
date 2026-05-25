@@ -21,7 +21,6 @@ process DMR_FILTERING {
         -v OFS='\t' \\
         '\$4 == "different" ${args} {print \$1, \$2, \$3, \$9, \$10, (\$13 > 0 ? \$13 : -\$13) ${args2}}' \\
         ${bed} \\
-        | sort -k1,1 -k2,2n \\
         > different_dmr.bed
 
     bedtools slop \\
@@ -34,7 +33,7 @@ process DMR_FILTERING {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         awk: \$(awk --version | head -n 1 | awk '{print \$3}')
-        sort: \$(sort --version | head -n 1 | awk '{print \$4}')
+        bedtools: \$(bedtools --version | sed -e "s/bedtools v//g")
     END_VERSIONS
     """
 }
