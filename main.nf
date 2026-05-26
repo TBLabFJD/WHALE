@@ -84,10 +84,10 @@ workflow {
     //
 
     //
-    def ch_fasta     = params.fasta     ? channel.fromPath(params.fasta).map{ it -> [ [id:it.baseName], it ] }.collect() : channel.empty()
-    def ch_fasta_fai = params.fasta_fai ? channel.fromPath(params.fasta_fai).map{ it -> [ [id:it.baseName], it ] }.collect() : channel.empty()
-    def ch_fasta_gzi = params.fasta_gzi ? channel.fromPath(params.fasta_gzi).map{ it -> [ [id:it.baseName], it ] }.collect() : channel.empty()
-    def ch_chrom_sizes = params.chrom_sizes ? channel.fromPath(params.chrom_sizes).first() : channel.empty()
+    def ch_fasta       = params.fasta       ? channel.fromPath(params.fasta).map{ it -> [ [id:it.baseName], it ] }.collect() : channel.empty()
+    def ch_fasta_fai   = params.fasta_fai   ? channel.fromPath(params.fasta_fai).map{ it -> [ [id:it.baseName], it ] }.collect() : channel.empty()
+    def ch_fasta_gzi   = params.fasta_gzi   ? channel.fromPath(params.fasta_gzi).map{ it -> [ [id:it.baseName], it ] }.collect() : channel.empty()
+    def ch_chrom_sizes = params.chrom_sizes ? channel.fromPath(params.chrom_sizes).map{ it -> [ [id:it.baseName], it ] }.collect() : channel.empty()
 
     //
     // SUBWORKFLOW: Run initialisation tasks
