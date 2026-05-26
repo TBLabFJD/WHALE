@@ -7,7 +7,6 @@ include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_2 } from '../../../modules/nf-core/sa
 include { MODKIT_PILEUP                      } from '../../../modules/nf-core/modkit/pileup'
 include { TABIX_TABIX                        } from '../../../modules/nf-core/tabix/tabix'
 include { TABIX_BGZIP                        } from '../../../modules/nf-core/tabix/bgzip'
-include { METHPHASER                         } from '../../../modules/local/methphaser'
 include { MODKIT_DMR                         } from '../../../modules/local/modkit/dmr'
 
 
