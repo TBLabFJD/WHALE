@@ -61,7 +61,7 @@ workflow VARIANTPIPELINE {
             samplesheet
         )
 
-        ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
+        ch_multiqc_files = ch_multiqc_files.mix( FASTQC.out.zip.collect{ _meta, zip -> zip } )
         ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
         MINIMAP2_ALIGN (
@@ -92,6 +92,9 @@ workflow VARIANTPIPELINE {
     }
     else if (params.step == 'sv_annotation') {
         merged_final_bed = samplesheet
+    }
+    else if (params.step == 'asm') {
+        ch_bam_bai_haplotypes = samplesheet
     }
 
     //
@@ -132,6 +135,7 @@ workflow VARIANTPIPELINE {
     //
     // PHASING AND DMR
     //
+
     def bam_for_sv_calling = bam_bai
 
     if (params.phasing == true) {
@@ -151,14 +155,16 @@ workflow VARIANTPIPELINE {
     }
 
     if (params.asm == true) {
+
+        def asm_input = ch_bam_bai_haplotypes ?: samplesheet
+
         ASM (
-            ch_bam_bai_haplotypes,
+            asm_input,
             ch_reference,
             chrom_sizes,
             ch_intervals
         )
     }
-
 
     //
     // SUBWORKFLOW: Run Merge SV Calling
@@ -220,7 +226,9 @@ workflow VARIANTPIPELINE {
             ch_intervals
         )
 
-        // ch_multiqc_files = ch_multiqc_files.mix(BAM_STATS.out.nanostat_report)
+        ch_multiqc_files = ch_multiqc_files.mix( BAM_STATS.out.nanostat_report.map { _meta, txt -> txt } )
+        
+        ch_versions = ch_versions.mix( BAM_STATS.out.versions )
     }
 
     //
