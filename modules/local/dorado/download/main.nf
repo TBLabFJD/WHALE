@@ -11,9 +11,15 @@ process DORADO_DOWNLOAD {
 
     output:
     tuple val(meta), path("${dorado_model}"), emit: model
+    path "versions.yml"                     , emit: versions
 
     script:
     """
     dorado download --model ${dorado_model}
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        dorado: \$(echo \$(dorado --version 2>&1) | sed -r 's/.{81}//')
+    END_VERSIONS
     """
 }
