@@ -14,7 +14,7 @@ process WHATSHAP_SPLIT {
     tuple val(meta), path("${prefix}_h1.bam")        , emit: bam_h1
     tuple val(meta), path("${prefix}_h2.bam")        , emit: bam_h2
     tuple val(meta), path("${prefix}_unassigned.bam"), emit: bam_unassigned
-    tuple val("${task.process}"), val('whatshap'), eval("whatshap --version"), emit: versions_whatshap, topic: versions
+    tuple val("${task.process}"), val('whatshap'), eval("whatshap --version"), emit: versions_whatshap
 
     when:
     task.ext.when == null || task.ext.when
