@@ -4,7 +4,7 @@ process DMR_FILTERING {
 
     input:
     tuple val(meta), path(bed)
-    path chrom_sizes
+    tuple val(meta2), path(chrom_sizes)
 
     output:
     tuple val(meta), path("${prefix}_dmr.bed")                  , emit: dmr_bed
