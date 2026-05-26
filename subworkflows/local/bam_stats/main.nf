@@ -1,7 +1,6 @@
 include { SAMTOOLS_VIEW } from '../../../modules/nf-core/samtools/view'
 include { NANOSTAT      } from '../../../modules/local/nanostat'
 
-
 workflow BAM_STATS {
 
     take:
@@ -11,6 +10,7 @@ workflow BAM_STATS {
     ch_intervals
 
     main:
+    ch_versions = channel.empty()
 
     SAMTOOLS_VIEW (
         bam_bai,
@@ -24,6 +24,9 @@ workflow BAM_STATS {
         SAMTOOLS_VIEW.out.bam
     )
 
+    ch_versions = ch_versions.mix(NANOSTAT.out.versions.first())
+
     emit:
     nanostat_report = NANOSTAT.out.report
+    versions        = ch_versions
 }
