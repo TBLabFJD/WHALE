@@ -1,0 +1,57 @@
+name: "merge_dmr_files"
+description: Merges the filtered AnnotSV TSV file with the original DMR bed file and the intersected promoters and enhancers BED files using a left join approach
+keywords:
+  - merge
+  - join
+  - pandas
+  - python
+  - dmr
+  - annotation
+tools:
+  - "pandas":
+      description: "Fast, powerful, flexible and easy to use open source data analysis and manipulation tool."
+      homepage: "https://pandas.pydata.org/"
+      documentation: "https://pandas.pydata.org/docs/"
+      tool_dev_url: "https://github.com/pandas-dev/pandas"
+      doi: "10.5281/zenodo.3509134" 
+      licence: ["BSD-3-Clause"]
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'sample_1' ]
+  - tsv:
+      type: file
+      description: Filtered TSV file from AnnotSV containing the structural variant/DMR annotations
+      pattern: "*.{tsv,txt}"
+  - dmr_bed:
+      type: file
+      description: Extended BED file containing the differentially methylated regions and their methylation values
+      pattern: "*.bed"
+  - promoters:
+      type: file
+      description: BED file containing the DMRs that overlapped with promoters (output from bedtools intersect)
+      pattern: "*.bed"
+  - enhancers:
+      type: file
+      description: BED file containing the DMRs that overlapped with enhancers (output from bedtools intersect)
+      pattern: "*.bed"
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'sample_1' ]
+  - merged_tsv:
+      type: file
+      description: Final merged TSV file containing the annotations, methylation values, and overlapping regulatory elements for each DMR
+      pattern: "*_merged.tsv"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@Pablo10333"
+maintainers:
+  - "@Pablo10333"
