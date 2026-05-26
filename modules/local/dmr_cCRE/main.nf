@@ -4,8 +4,8 @@ process DMR_cCRE {
 
     input:
     tuple val(meta), path(bed)
-    path promoters_bed
-    path enhancers_bed
+    tuple val(meta2), path(promoters_bed)
+    tuple val(meta3), path(enhancers_bed)
 
     output:
     tuple val(meta), path("${prefix}_overlapped_promoters.bed") , emit: promoters_bed

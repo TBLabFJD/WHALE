@@ -58,10 +58,13 @@ workflow ASM {
         chrom_sizes
     )
 
+    ch_promoters = channel.value([ [id: params.assembly], file(params.promoters_bed, checkIfExists: true) ])
+    ch_enhancers = channel.value([ [id: params.assembly], file(params.enhancers_bed, checkIfExists: true) ])
+    
     DMR_cCRE (
         DMR_FILTERING.out.dmr_bed,
-        file(params.promoters_bed),
-        file(params.enhancers_bed)
+        ch_promoters,
+        ch_enhancers
     )
 
     if (params.annotsv_annotations == 'install') {
@@ -72,7 +75,7 @@ workflow ASM {
         ch_annotations_dir = params.annotsv_annotations ? channel.fromPath(params.annotsv_annotations).map{ it -> [ [id:it.baseName], it ] }.first() : channel.empty()
     }
 
-    ch_transcripts = channel.value( [ [id: 'empty'], [] ] ) // whithout parameter because it must be always empty
+    ch_transcripts = channel.value( [ [id: 'empty'], [] ] ) // without parameter because it must be always empty
 
     ch_filtered_dmr = DMR_FILTERING.out.dmr_bed.filter { _meta, bed_file -> 
         bed_file.size() > 0 
