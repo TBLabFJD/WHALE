@@ -1,0 +1,58 @@
+name: "methylartist_locus"
+description: "Generates read-level methylation plots for a specific genomic locus using aligned BAM files with base modification tags."
+keywords:
+  - methylation
+  - nanopore
+  - plotting
+  - locus
+  - epigenetics
+tools:
+  - "methylartist":
+      description: "Tools for parsing and plotting nanopore methylation data."
+      homepage: "https://github.com/adamewing/methylartist"
+      documentation: "https://github.com/adamewing/methylartist"
+      tool_dev_url: "https://github.com/adamewing/methylartist"
+      doi: "10.1093/bioinformatics/btac424"
+      licence: ["MIT"]
+      
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. `[ id:'test_sample', single_end:false ]`
+  - bam:
+      type: file
+      description: Sorted BAM file containing base modification tags (MM/ML)
+      pattern: "*.{bam}"
+  - bai:
+      type: file
+      description: BAM file index
+      pattern: "*.{bai}"
+  - interval:
+      type: string
+      description: Coordinates of the region of interest in `chromosome:start-end` format (e.g., `chr1:1000-2000`)
+
+output:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information associated with the output
+  - pdf:
+      type: file
+      description: Locus plot in PDF format
+      pattern: "*.{pdf}"
+  - png:
+      type: file
+      description: Locus plot in PNG format
+      pattern: "*.{png}"
+  - svg:
+      type: file
+      description: Locus plot in SVG format
+      pattern: "*.{svg}"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+
+authors:
+  - "@Pablo10333"
