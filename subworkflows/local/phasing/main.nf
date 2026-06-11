@@ -17,6 +17,7 @@ workflow PHASING {
     ch_reference
     fasta
     fasta_fai
+    ch_versions
 
     main:
 
@@ -24,6 +25,8 @@ workflow PHASING {
         ch_phasing_input,
         ch_reference
     )
+
+    ch_versions = ch_versions.mix(WHATSHAP_PHASE.out.versions_whatshap.first())
 
     ch_haplotag_input = WHATSHAP_PHASE.out.vcf
         .join(WHATSHAP_PHASE.out.tbi)
@@ -45,6 +48,8 @@ workflow PHASING {
     TABIX_BGZIP (
         WHATSHAP_HAPLOTAG.out.tsv
     )
+
+    ch_versions = ch_versions.mix(TABIX_BGZIP.out.versions.first())
 
     hap_bam_bai = WHATSHAP_HAPLOTAG.out.bam
         .join(SAMTOOLS_INDEX_1.out.bai)
@@ -87,4 +92,5 @@ workflow PHASING {
     phased_vcf  = WHATSHAP_PHASE.out.vcf
     haplotagged_bam_bai = hap_bam_bai
     ch_bam_bai_haplotypes = ch_bam_bai_haplotypes
+    ch_versions = ch_versions
 }
