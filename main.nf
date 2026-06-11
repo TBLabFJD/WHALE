@@ -30,10 +30,12 @@ include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_vari
 */
 
 // Rescatamos los valores de igenomes.config automáticamente si se pasa --genome
-params.fasta     = getGenomeAttribute('fasta')
-params.fasta_fai = getGenomeAttribute('fasta_fai')
-params.fasta_gzi = getGenomeAttribute('fasta_gzi')
+params.fasta       = getGenomeAttribute('fasta')
+params.fasta_fai   = getGenomeAttribute('fasta_fai')
+params.fasta_gzi   = getGenomeAttribute('fasta_gzi')
 params.chrom_sizes = getGenomeAttribute('chrom_sizes')
+params.gtf_gz      = getGenomeAttribute('gtf_gz')
+params.gtf_tbi     = getGenomeAttribute('gtf_tbi')
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -52,6 +54,8 @@ workflow NFCORE_VARIANTPIPELINE {
     fasta_fai
     fasta_gzi
     chrom_sizes
+    gtf_gz
+    gtf_tbi
     
     main:
 
@@ -63,7 +67,9 @@ workflow NFCORE_VARIANTPIPELINE {
         fasta,
         fasta_fai,
         fasta_gzi,
-        chrom_sizes
+        chrom_sizes,
+        gtf_gz,
+        gtf_tbi
     )
 
     emit:
@@ -88,6 +94,8 @@ workflow {
     def ch_fasta_fai   = params.fasta_fai   ? channel.fromPath(params.fasta_fai).map{ it -> [ [id:it.baseName], it ] }.collect() : channel.empty()
     def ch_fasta_gzi   = params.fasta_gzi   ? channel.fromPath(params.fasta_gzi).map{ it -> [ [id:it.baseName], it ] }.collect() : channel.empty()
     def ch_chrom_sizes = params.chrom_sizes ? channel.fromPath(params.chrom_sizes).map{ it -> [ [id:it.baseName], it ] }.collect() : channel.empty()
+    def ch_gtf_gz      = params.gtf_gz      ? channel.fromPath(params.gtf_gz).map{ it -> [ [id:it.baseName], it ] }.collect() : channel.empty()
+    def ch_gtf_tbi     = params.gtf_tbi     ? channel.fromPath(params.gtf_tbi).map{ it -> [ [id:it.baseName], it ] }.collect() : channel.empty()
 
     //
     // SUBWORKFLOW: Run initialisation tasks
@@ -110,7 +118,9 @@ workflow {
         ch_fasta,
         ch_fasta_fai,
         ch_fasta_gzi,
-        ch_chrom_sizes
+        ch_chrom_sizes,
+        ch_gtf_gz,
+        ch_gtf_tbi
     )
 
     //
