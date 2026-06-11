@@ -1,13 +1,20 @@
-include { MODKIT_PILEUP              } from '../../../modules/nf-core/modkit/pileup'
-include { TABIX_TABIX                } from '../../../modules/nf-core/tabix/tabix'
-include { TABIX_BGZIP                } from '../../../modules/nf-core/tabix/bgzip'
-include { MODKIT_DMR                 } from '../../../modules/local/modkit/dmr'
-include { DMR_FILTERING              } from '../../../modules/local/dmr_filtering'
-include { DMR_cCRE                   } from '../../../modules/local/dmr_cCRE'
-include { ANNOTSV_INSTALLANNOTATIONS } from '../../../modules/nf-core/annotsv/installannotations/main'
-include { ANNOTSV_ANNOTSV            } from '../../../modules/nf-core/annotsv/annotsv/main' 
-include { ANNOTSV_TSV_FILTERING      } from '../../../modules/local/annotsv_tsv_filtering' 
-include { MERGE_DMR_FILES            } from '../../../modules/local/merge_dmr_files'
+include { MODKIT_PILEUP                } from '../../../modules/nf-core/modkit/pileup'
+include { TABIX_TABIX as TABIX_TABIX_1 } from '../../../modules/nf-core/tabix/tabix'
+include { TABIX_BGZIP as TABIX_BGZIP_1 } from '../../../modules/nf-core/tabix/bgzip'
+include { MODKIT_DMR                   } from '../../../modules/local/modkit/dmr'
+include { DMR_FILTERING                } from '../../../modules/local/dmr_filtering'
+include { UCSC_LIFTOVER                } from '../../../modules/nf-core/ucsc/liftover'
+include { DMR_cCRE                     } from '../../../modules/local/dmr_cCRE'
+include { ANNOTSV_INSTALLANNOTATIONS   } from '../../../modules/nf-core/annotsv/installannotations'
+include { ANNOTSV_ANNOTSV              } from '../../../modules/nf-core/annotsv/annotsv' 
+include { ANNOTSV_TSV_FILTERING        } from '../../../modules/local/annotsv_tsv_filtering' 
+include { MERGE_DMR_FILES              } from '../../../modules/local/merge_dmr_files'
+include { METHYLARTIST_LOCUS           } from '../../../modules/local/methylartist/locus'
+include { TABIX_TABIX as TABIX_TABIX_2 } from '../../../modules/nf-core/tabix/tabix'
+include { TABIX_BGZIP as TABIX_BGZIP_2 } from '../../../modules/nf-core/tabix/bgzip'
+include { TABIX_TABIX as TABIX_TABIX_3 } from '../../../modules/nf-core/tabix/tabix'
+
+
 
 
 workflow ASM {
@@ -17,6 +24,10 @@ workflow ASM {
     ch_reference
     chrom_sizes
     ch_intervals
+    ch_haplotagged_bam_bai
+    ch_gtf_tbi
+    ch_snv_vcf_gz_tbi
+    ch_versions
 
     main:
 
@@ -26,12 +37,14 @@ workflow ASM {
         ch_intervals
     )
 
-    TABIX_TABIX (
+    ch_versions = ch_versions.mix(MODKIT_PILEUP.out.versions_modkit.first())
+
+    TABIX_TABIX_1 (
         MODKIT_PILEUP.out.bedgz
     )
 
     ch_bed_with_tbi = MODKIT_PILEUP.out.bedgz
-        .join(TABIX_TABIX.out.tbi)
+        .join(TABIX_TABIX_1.out.tbi)
 
     ch_bed_with_tbi.branch {
         h1: it[0].id.endsWith('h1')
@@ -54,15 +67,31 @@ workflow ASM {
     )
 
     DMR_FILTERING (
-        MODKIT_DMR.out.differences_bed,
+        MODKIT_DMR.out.regions_bed,
         chrom_sizes
     )
+
+    ch_versions = ch_versions.mix(DMR_FILTERING.out.versions.first())
+
+    if (params.assembly == 'T2T-CHM13') {
+        ch_chain = channel.fromPath(params.chain_T2T_to_hg38, checkIfExists: true)
+
+        UCSC_LIFTOVER (
+          DMR_FILTERING.out.dmr_bed,
+          ch_chain 
+        )
+
+        dmr_bed = UCSC_LIFTOVER.out.lifted
+        ch_versions = ch_versions.mix(UCSC_LIFTOVER.out.versions_ucsc.first())
+    } else {
+        dmr_bed = DMR_FILTERING.out.dmr_bed
+    }
 
     ch_promoters = channel.value([ [id: params.assembly], file(params.promoters_bed, checkIfExists: true) ])
     ch_enhancers = channel.value([ [id: params.assembly], file(params.enhancers_bed, checkIfExists: true) ])
     
     DMR_cCRE (
-        DMR_FILTERING.out.dmr_bed,
+        dmr_bed,
         ch_promoters,
         ch_enhancers
     )
@@ -77,7 +106,7 @@ workflow ASM {
 
     ch_transcripts = channel.value( [ [id: 'empty'], [] ] ) // without parameter because it must be always empty
 
-    ch_filtered_dmr = DMR_FILTERING.out.dmr_bed.filter { _meta, bed_file -> 
+    ch_filtered_dmr = dmr_bed.filter { _meta, bed_file -> 
         bed_file.size() > 0 
     }
 
@@ -87,12 +116,14 @@ workflow ASM {
         ch_transcripts
     )
 
+    ch_versions = ch_versions.mix(ANNOTSV_ANNOTSV.out.versions.first())
+
     ANNOTSV_TSV_FILTERING (
         ANNOTSV_ANNOTSV.out.tsv
     )
 
     ch_files_to_merge = ANNOTSV_TSV_FILTERING.out.filtered_tsv
-        .join(DMR_FILTERING.out.dmr_bed)
+        .join(dmr_bed)
         .join(DMR_cCRE.out.promoters_bed)
         .join(DMR_cCRE.out.enhancers_bed)
 
@@ -100,8 +131,45 @@ workflow ASM {
         ch_files_to_merge
     )
 
+    ch_versions = ch_versions.mix(MERGE_DMR_FILES.out.versions.first())
+
+    if ( params.methylartist_enabled == true ) {
+
+        ch_sample_data = ch_haplotagged_bam_bai
+            .join(ch_snv_vcf_gz_tbi)
+        
+        def intervals_list = params.methylartist_intervals instanceof String 
+            ? params.methylartist_intervals.tokenize(',') 
+            : params.methylartist_intervals
+
+        ch_plot_intervals = channel.fromList(intervals_list)
+
+        ch_for_methylartist = ch_sample_data.combine(ch_plot_intervals)
+
+        ch_for_methylartist
+        .multiMap { meta, bam, bai, vcf, tbi, interval -> 
+            sample_data: tuple(meta, bam, bai, vcf, tbi)
+            interval:    interval 
+        }
+        .set { ch_methylartist_inputs }
+
+        ch_methylartist_inputs.sample_data.view { "Data: $it" }
+
+        ch_methylartist_inputs.interval.view { "Interval: $it" }
+
+        METHYLARTIST_LOCUS (
+            ch_methylartist_inputs.sample_data,
+            ch_reference,
+            ch_gtf_tbi,
+            ch_methylartist_inputs.interval
+        )
+
+        ch_versions = ch_versions.mix(METHYLARTIST_LOCUS.out.versions.first())
+    }
+
     emit:
-    dmr_bed = DMR_FILTERING.out.dmr_bed
+    dmr_bed = dmr_bed
     pileup_bedgz = MODKIT_PILEUP.out.bedgz
-    pileup_tbi = TABIX_TABIX.out.tbi
+    pileup_tbi = TABIX_TABIX_1.out.tbi
+    ch_versions = ch_versions
 }
