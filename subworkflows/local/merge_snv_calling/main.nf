@@ -82,5 +82,6 @@ workflow MERGE_SNV_CALLING {
 
     emit:
     final_vcf = HEADER_VARIANTS_VCF.out.final_vcf
+    final_vcf_gz = TABIX_BGZIP.out.output
     final_tbi = TABIX_3.out.tbi
 }
