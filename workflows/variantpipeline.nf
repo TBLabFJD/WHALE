@@ -4,23 +4,24 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { FASTQC                    } from '../modules/nf-core/fastqc/main'
-include { MULTIQC                   } from '../modules/nf-core/multiqc/main'
-include { MINIMAP2_ALIGN            } from '../modules/nf-core/minimap2/align/main'
-include { paramsSummaryMap          } from 'plugin/nf-validation'
-include { paramsSummaryMultiqc      } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { softwareVersionsToYAML    } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { methodsDescriptionText    } from '../subworkflows/local/utils_nfcore_variantpipeline_pipeline'
-include { SNV_CALLING               } from '../subworkflows/local/snv_calling'
-include { SV_CALLING                } from '../subworkflows/local/sv_calling'
-include { MERGE_SNV_CALLING         } from '../subworkflows/local/merge_snv_calling'
-include { MERGE_SV_CALLING          } from '../subworkflows/local/merge_sv_calling'
-include { SNV_ANNOTATION            } from '../subworkflows/local/snv_annotation'
-include { SV_ANNOTATION             } from '../subworkflows/local/sv_annotation'
-include { BASECALLING               } from '../subworkflows/local/basecalling'  
-include { PHASING                   } from '../subworkflows/local/phasing'
-include { ASM                       } from '../subworkflows/local/asm'
-include { BAM_STATS                 } from '../subworkflows/local/bam_stats'
+include { FASTQC                 } from '../modules/nf-core/fastqc/main'
+include { MULTIQC                } from '../modules/nf-core/multiqc/main'
+include { MINIMAP2_ALIGN         } from '../modules/nf-core/minimap2/align/main'
+include { paramsSummaryMap       } from 'plugin/nf-validation'
+include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_variantpipeline_pipeline'
+include { SNV_CALLING            } from '../subworkflows/local/snv_calling'
+include { SV_CALLING             } from '../subworkflows/local/sv_calling'
+include { MERGE_SNV_CALLING      } from '../subworkflows/local/merge_snv_calling'
+include { MERGE_SV_CALLING       } from '../subworkflows/local/merge_sv_calling'
+include { SNV_ANNOTATION         } from '../subworkflows/local/snv_annotation'
+include { SV_ANNOTATION          } from '../subworkflows/local/sv_annotation'
+include { BASECALLING            } from '../subworkflows/local/basecalling'  
+include { BAM_FILTERING          } from '../subworkflows/local/bam_filtering'
+include { PHASING                } from '../subworkflows/local/phasing'
+include { ASM                    } from '../subworkflows/local/asm'
+include { BAM_STATS              } from '../subworkflows/local/bam_stats'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -37,15 +38,24 @@ workflow VARIANTPIPELINE {
     fasta_fai
     fasta_gzi
     chrom_sizes
+    gtf_gz
+    gtf_tbi
 
     main:
 
     ch_versions = channel.empty()
     ch_multiqc_files = channel.empty()
 
-    ch_reference = fasta.map { _meta, file -> file }
-        .combine( fasta_fai.map { _meta, file -> file } )
-        .map { fa, fai -> [ [id:'genome'], fa, fai ] }
+    def bam_bai = channel.empty()
+
+    ch_reference = fasta.map { meta, fa -> [ meta, fa ] }
+        .combine( fasta_fai.map { _meta, fai -> fai } )
+        .map { meta, fa, fai -> [ meta, fa, fai ] }
+        .first()
+
+    ch_gtf_tbi = gtf_gz.map { meta, gtf -> [ meta, gtf ] }
+        .combine( gtf_tbi.map { _meta, tbi -> tbi } )
+        .map { meta, gtf, tbi -> [ meta, gtf, tbi ] }
         .first()
 
     ch_reads = params.reads ?
@@ -72,21 +82,23 @@ workflow VARIANTPIPELINE {
             false,
             false
         )
+
         bam_bai = MINIMAP2_ALIGN.out.bam.join(MINIMAP2_ALIGN.out.index)
     }
     else if (params.step == 'basecalling') {
         BASECALLING (
             samplesheet,
             ch_reference,
-            fasta_gzi
+            fasta_gzi,
+            ch_versions
         )
 
         bam_bai = BASECALLING.out.bam_bai
+        ch_versions = BASECALLING.out.ch_versions
     }
     else if (params.step == 'variant_calling' || params.step == 'phasing') {
         bam_bai = samplesheet
     }
-
     else if (params.step == 'snv_annotation') {
         merged_vcf = samplesheet
     }
@@ -127,6 +139,10 @@ workflow VARIANTPIPELINE {
         merged_vcf = MERGE_SNV_CALLING.out.final_vcf
         final_snv_vcf = MERGE_SNV_CALLING.out.final_vcf
         final_snv_tbi = MERGE_SNV_CALLING.out.final_tbi
+
+        ch_snv_vcf_gz_tbi = MERGE_SNV_CALLING.out.final_vcf_gz
+            .join(MERGE_SNV_CALLING.out.final_tbi)
+
     } else if (params.step == 'phasing' || params.step == 'snv_annotation') {
         final_snv_vcf = samplesheet.map { meta, vcf, _tbi -> [meta, vcf] }
         final_snv_tbi = samplesheet.map { meta, _vcf, tbi -> [meta, tbi] }
@@ -136,34 +152,49 @@ workflow VARIANTPIPELINE {
     // PHASING AND DMR
     //
 
-    def bam_for_sv_calling = bam_bai
-
     if (params.phasing == true) {
-        ch_vcf_tbi = final_snv_vcf.join(final_snv_tbi)
+        ch_snv_vcf_tbi = final_snv_vcf.join(final_snv_tbi)
 
-        ch_phasing_input = ch_vcf_tbi.join(bam_bai) // now the bam and tbi files are grouped by the same meta      
+        ch_phasing_input = ch_snv_vcf_tbi.join(bam_bai) // now the bam and tbi files are grouped by the same meta      
 
         PHASING (
             ch_phasing_input,
             ch_reference,
             fasta,
-            fasta_fai
+            fasta_fai,
+            ch_versions
         )
 
-        bam_for_sv_calling = PHASING.out.haplotagged_bam_bai
+        bam_bai = PHASING.out.haplotagged_bam_bai
         ch_bam_bai_haplotypes = PHASING.out.ch_bam_bai_haplotypes
+        ch_versions = PHASING.out.ch_versions
     }
 
-    if (params.asm == true) {
+    if (params.asm && !params.phasing) {
+        error "ERROR: You must perform phasing (--phasing true) if you want to run ASM (--asm true)"
+    } else if (params.asm && params.phasing) {  
+        BAM_FILTERING (   
+            ch_bam_bai_haplotypes,
+            ch_reference,
+            ch_reads,
+            ch_intervals
+        )
 
-        def asm_input = ch_bam_bai_haplotypes ?: samplesheet
+        asm_input = BAM_FILTERING.out.filtered_bam_bai
+        // def asm_input = ch_bam_bai_haplotypes ?: samplesheet
 
         ASM (
             asm_input,
             ch_reference,
             chrom_sizes,
-            ch_intervals
+            ch_intervals,
+            bam_bai, // haplotagged
+            ch_gtf_tbi,
+            ch_snv_vcf_gz_tbi,
+            ch_versions
         )
+
+        ch_versions = ASM.out.ch_versions
     }
 
     //
@@ -172,7 +203,7 @@ workflow VARIANTPIPELINE {
 
     if (params.sv_calling == true) {
         SV_CALLING (
-            bam_for_sv_calling,
+            bam_bai,
             fasta,
             fasta_fai,
             fasta_gzi
