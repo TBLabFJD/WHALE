@@ -7,8 +7,8 @@ process DMR_FILTERING {
     tuple val(meta2), path(chrom_sizes)
 
     output:
-    tuple val(meta), path("${prefix}_dmr.bed")                  , emit: dmr_bed
-    path "versions.yml"                                         , emit: versions
+    tuple val(meta), path("${prefix}_dmr.bed"), emit: dmr_bed
+    path "versions.yml"                       , emit: versions
 
     script:
     def args  = task.ext.args  ?: ''
@@ -26,7 +26,6 @@ process DMR_FILTERING {
     bedtools slop \\
         -i different_dmr.bed \\
         -g ${chrom_sizes} \\
-        -b 150 \\
         ${args3} \\
         > ${prefix}_dmr.bed
 
