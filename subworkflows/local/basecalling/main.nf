@@ -10,6 +10,7 @@ workflow BASECALLING {
     samplesheet
     ch_reference
     fasta_gzi
+    ch_versions
 
     main:
     model_ch = channel.of([ 
@@ -20,6 +21,8 @@ workflow BASECALLING {
     DORADO_DOWNLOAD (
         model_ch
     )
+
+    ch_versions = ch_versions.mix(DORADO_DOWNLOAD.out.versions.first())
 
     DORADO_BASECALLER (
         samplesheet,
@@ -32,6 +35,8 @@ workflow BASECALLING {
         ch_reference,
         "bai"
     )
+
+    ch_versions = ch_versions.mix(SAMTOOLS_SORT.out.versions_samtools.first())
 
     ch_bams_for_merge = SAMTOOLS_SORT.out.bam
         .groupTuple() // Group the files by ID
@@ -52,5 +57,6 @@ workflow BASECALLING {
 
     emit:
     bam_bai = SAMTOOLS_MERGE.out.bam.join(SAMTOOLS_INDEX.out.bai)
+    ch_versions = ch_versions
 
 }
