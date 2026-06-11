@@ -12,23 +12,23 @@ process MODKIT_DMR {
     tuple val(meta2), path(fasta), path(fai)
 
     output:
-    tuple val(meta), path("${prefix}.bed")            , emit: regions_bed
-    tuple val(meta), path("${prefix}_differences.bed"), emit: differences_bed
-    path "versions.yml"                               , emit: versions
+    tuple val(meta), path("${prefix}_every_CpG.bed") , emit: CpG_bed
+    tuple val(meta), path("${prefix}_regions.bed")   , emit: regions_bed
+    path "versions.yml"                              , emit: versions
 
     script:
     def args   = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: "${meta.id}_regions"
+    prefix = task.ext.prefix ?: "${meta.id}"
 
     """
     modkit dmr pair \\
         -a ${h1_bed} \\
         -b ${h2_bed} \\
-        -o ${prefix}.bed \\
+        -o ${prefix}_every_CpG.bed \\
         --ref ${fasta} \\
         --threads ${task.cpus} \\
         --base C \\
-        --segment ${prefix}_differences.bed \\
+        --segment ${prefix}_regions.bed \\
         ${args}
 
     cat <<-END_VERSIONS > versions.yml
