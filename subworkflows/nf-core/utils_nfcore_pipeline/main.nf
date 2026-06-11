@@ -103,7 +103,23 @@ def getWorkflowVersion() {
 //
 def processVersionsFromYAML(yaml_file) {
     Yaml yaml = new Yaml()
-    versions = yaml.load(yaml_file).collectEntries { k, v -> [ k.tokenize(':')[-1], v ] }
+    def versions = [:]
+
+    try {
+        if (yaml_file instanceof java.nio.file.Path || yaml_file instanceof File) {
+            versions = yaml.load(yaml_file.text).collectEntries { k, v -> [ k.tokenize(':')[-1], v ] }
+        }
+        else if (yaml_file instanceof ArrayList && yaml_file.size() >= 3) {
+            def process_name = yaml_file[0].toString().tokenize(':')[-1]
+            versions = [ (process_name): [ (yaml_file[1].toString()): yaml_file[2].toString() ] ]
+        }
+        else {
+            versions = yaml.load(yaml_file.toString()).collectEntries { k, v -> [ k.tokenize(':')[-1], v ] }
+        }
+    } catch (Exception e) {
+        log.warn "No se pudieron extraer las versiones de: ${yaml_file}. Error: ${e.message}"
+    }
+
     return yaml.dumpAsMap(versions).trim()
 }
 
