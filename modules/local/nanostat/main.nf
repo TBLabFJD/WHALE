@@ -10,7 +10,7 @@ process NANOSTAT {
 
     output:
     tuple val(meta), path("${prefix}_nanostat_report.txt"), emit: report
-    path "versions.yml"                              , emit: versions
+    path "versions.yml"                                   , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
