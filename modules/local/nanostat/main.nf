@@ -9,7 +9,7 @@ process NANOSTAT {
     tuple val(meta), path(bam)
 
     output:
-    tuple val(meta), path("${prefix}_bam_report.txt"), emit: report
+    tuple val(meta), path("${prefix}_nanostat_report.txt"), emit: report
     path "versions.yml"                              , emit: versions
 
     when:
@@ -23,7 +23,7 @@ process NANOSTAT {
     NanoStat \\
         --bam ${bam} \\
         ${args} \\
-        --name ${prefix}_bam_report.txt
+        --name ${prefix}_nanostat_report.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
