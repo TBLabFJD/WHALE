@@ -102,6 +102,16 @@
                 "chrom_sizes": {
                     "type": "string",
                     "description": "Path to chromosome sizes file."
+                },
+                "gtf_gz": {
+                    "type": "string",
+                    "description": "Path to bgzipped GTF/GFF file for gene annotations.",
+                    "fa_icon": "fas fa-file-code"
+                },
+                "gtf_tbi": {
+                    "type": "string",
+                    "description": "Path to Tabix index of the bgzipped GTF/GFF file.",
+                    "fa_icon": "fas fa-file-code"
                 }
             }
         },
@@ -416,6 +426,25 @@
                 }
             }
         },
+        "methylartist_options": {
+            "title": "Methylartist Options",
+            "type": "object",
+            "fa_icon": "fas fa-chart-bar",
+            "description": "Options for locus-specific methylation visualization.",
+            "properties": {
+                "methylartist_enabled": {
+                    "type": "boolean",
+                    "description": "Enable the Methylartist plotting workflow.",
+                    "default": false,
+                    "fa_icon": "fas fa-toggle-on"
+                },
+                "methylartist_intervals": {
+                    "type": "string",
+                    "description": "Comma-separated string or list of genomic intervals to plot (e.g. 'chr1:1000-2000,chr2:5000-6000').",
+                    "fa_icon": "fas fa-ruler-horizontal"
+                }
+            }
+        },
         "singularity_images": {
             "title": "Singularity images",
             "type": "object",
@@ -648,6 +677,9 @@
         },
         {
             "$ref": "#/definitions/asm_options"
+        },
+        {
+            "$ref": "#/definitions/methylartist_options"
         },
         {
             "$ref": "#/definitions/singularity_images"
