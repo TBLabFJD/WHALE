@@ -2,7 +2,9 @@ process DORADO_BASECALLER {
     tag "$meta.id"
     label 'process_high'
 
-    container "docker.io/ontresearch/dorado:sha00aa724a69ddc5f47d82bd413039f912fdaf4e77"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'docker://ontresearch/dorado:0.5.3' :
+        'docker.io/ontresearch/dorado:0.5.3' }"
 
     input:
     tuple val(meta), path(pod5)

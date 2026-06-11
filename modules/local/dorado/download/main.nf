@@ -2,7 +2,9 @@ process DORADO_DOWNLOAD {
     tag "$dorado_model"
     label 'process_single'
 
-    container "docker.io/ontresearch/dorado"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'docker://ontresearch/dorado:0.5.3' :
+        'docker.io/ontresearch/dorado:0.5.3' }"
 
     storeDir "${params.dorado_models_dir ?: './dorado_models'}"
 
