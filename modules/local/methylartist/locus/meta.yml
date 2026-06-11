@@ -1,58 +1,112 @@
 name: "methylartist_locus"
-description: "Generates read-level methylation plots for a specific genomic locus using aligned BAM files with base modification tags."
+description: "Generates locus-specific methylation plots from modified base BAM files using Methylartist, incorporating genomic annotations (GTF) and short variant calls (VCF)."
 keywords:
   - methylation
-  - nanopore
-  - plotting
+  - visualization
+  - plot
   - locus
+  - nanopore
+  - long-reads
   - epigenetics
+  - vcf
+  - gtf
 tools:
   - "methylartist":
       description: "Tools for parsing and plotting nanopore methylation data."
       homepage: "https://github.com/adamewing/methylartist"
       documentation: "https://github.com/adamewing/methylartist"
       tool_dev_url: "https://github.com/adamewing/methylartist"
-      doi: "10.1093/bioinformatics/btac424"
-      licence: ["MIT"]
-      
+      doi: "10.1093/bioinformatics/btac292"
+      licence: "['MIT']"
+      identifier: ""
+
 input:
-  - meta:
-      type: map
-      description: |
-        Groovy Map containing sample information
-        e.g. `[ id:'test_sample', single_end:false ]`
-  - bam:
-      type: file
-      description: Sorted BAM file containing base modification tags (MM/ML)
-      pattern: "*.{bam}"
-  - bai:
-      type: file
-      description: BAM file index
-      pattern: "*.{bai}"
-  - interval:
-      type: string
-      description: Coordinates of the region of interest in `chromosome:start-end` format (e.g., `chr1:1000-2000`)
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'sample1', single_end:false ]`
+    - bam:
+        type: file
+        description: Sorted BAM/CRAM/SAM file containing modified base tags (MM/ML)
+        pattern: "*.bam"
+    - bai:
+        type: file
+        description: Index of the BAM/CRAM/SAM file
+        pattern: "*.bai"
+    - vcf:
+        type: file
+        description: bgzipped VCF file containing SNV variant calls for the sample
+        pattern: "*.{vcf.gz}"
+    - vcf_tbi:
+        type: file
+        description: Tabix index of the VCF file.
+        pattern: "*.{vcf.gz.tbi}"
+
+  - - meta2:
+        type: map
+        description: Groovy Map containing reference genome information
+    - fasta:
+        type: file
+        description: Reference genome FASTA file.
+        pattern: "*.{fasta,fas,fa,fna}"
+    - fai:
+        type: file
+        description: Index of the reference genome FASTA file
+        pattern: "*.fai"
+
+  - - meta3:
+        type: map
+        description: Groovy Map containing gene annotation reference information
+    - gtf:
+        type: file
+        description: bgzipped GTF/GFF file for gene annotations (e.g., GENCODE)
+        pattern: "*.gtf.gz"
+    - gtf_tbi:
+        type: file
+        description: Tabix index of the bgzipped GTF/GFF file.
+        pattern: "*.gtf.gz.tbi"
+
+  - - interval:
+        type: string
+        description: Genomic interval to plot in the format 'chr:start-end'
 
 output:
-  - meta:
-      type: map
-      description: Groovy Map containing sample information associated with the output
-  - pdf:
-      type: file
-      description: Locus plot in PDF format
-      pattern: "*.{pdf}"
   - png:
-      type: file
-      description: Locus plot in PNG format
-      pattern: "*.{png}"
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', single_end:false ]`
+      - "*.png":
+          type: file
+          description: Methylation plot in PNG format
+          pattern: "*.png"
+  - pdf:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', single_end:false ]`
+      - "*.pdf":
+          type: file
+          description: Methylation plot in PDF format
+          pattern: "*.pdf"
   - svg:
-      type: file
-      description: Locus plot in SVG format
-      pattern: "*.{svg}"
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'sample1', single_end:false ]`
+      - "*.svg":
+          type: file
+          description: Methylation plot in SVG format
+          pattern: "*.svg"
   - versions:
-      type: file
-      description: File containing software versions
-      pattern: "versions.yml"
+      - "versions.yml":
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
 
 authors:
   - "@Pablo10333"
