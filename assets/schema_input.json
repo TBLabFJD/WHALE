@@ -38,8 +38,15 @@
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^\\S+\\.vcf$",
-                "errorMessage": "VCF file cannot contain spaces and must have extension '.vcf'"
+                "pattern": "^\\S+\\.vcf(\\.gz)?$",
+                "errorMessage": "VCF file cannot contain spaces and must have extension '.vcf' or '.vcf.gz'"
+            },
+            "tbi": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.tbi$",
+                "errorMessage": "TBI index file cannot contain spaces and must have extension '.tbi'"
             },
             "bed": {
                 "type": "string",
