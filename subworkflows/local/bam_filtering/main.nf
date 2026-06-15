@@ -10,7 +10,8 @@ workflow BAM_FILTERING {
     not_filtered_bam_bai
     ch_reference
     ch_reads
-    ch_intervals 
+    ch_intervals
+    ch_versions
 
     main:
 
@@ -20,6 +21,8 @@ workflow BAM_FILTERING {
         not_filtered_bam,
         ch_reference
     )
+
+    ch_versions = ch_versions.mix(SAMTOOLS_MARKDUP.out.versions_samtools.first())
 
     SAMTOOLS_INDEX (
         SAMTOOLS_MARKDUP.out.bam
@@ -40,4 +43,5 @@ workflow BAM_FILTERING {
 
     emit:
     filtered_bam_bai = filtered_bam_bai
+    ch_versions = ch_versions
 }
