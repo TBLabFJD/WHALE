@@ -10,9 +10,9 @@ workflow BAM_STATS {
     ch_reference
     ch_reads
     ch_intervals
+    ch_versions
 
     main:
-    ch_versions = channel.empty()
 
     SAMTOOLS_VIEW (
         bam_bai,
@@ -35,5 +35,6 @@ workflow BAM_STATS {
 
     emit:
     nanostat_report = NANOSTAT.out.report
+    samtools_report = SAMTOOLS_COVERAGE.out.coverage
     versions        = ch_versions
 }

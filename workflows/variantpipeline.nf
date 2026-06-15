@@ -22,6 +22,7 @@ include { BAM_FILTERING          } from '../subworkflows/local/bam_filtering'
 include { PHASING                } from '../subworkflows/local/phasing'
 include { ASM                    } from '../subworkflows/local/asm'
 include { BAM_STATS              } from '../subworkflows/local/bam_stats'
+include { BAM_STATS as HAPLOTYPES_BAM_STATS } from '../subworkflows/local/bam_stats'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -94,7 +95,8 @@ workflow VARIANTPIPELINE {
         )
 
         bam_bai = BASECALLING.out.bam_bai
-        ch_versions = BASECALLING.out.ch_versions
+        ch_versions = ch_versions.mix( BASECALLING.out.ch_versions )
+
     }
     else if (params.step == 'variant_calling') {
             bam_bai = samplesheet
@@ -178,7 +180,8 @@ workflow VARIANTPIPELINE {
 
         bam_bai = PHASING.out.haplotagged_bam_bai
         ch_bam_bai_haplotypes = PHASING.out.ch_bam_bai_haplotypes
-        ch_versions = PHASING.out.ch_versions
+        ch_multiqc_files = ch_multiqc_files.mix( PHASING.out.whatshap_stats_report.map { _meta, txt -> txt } )
+        ch_versions = ch_versions.mix( PHASING.out.ch_versions )
     }
 
     if (params.asm && !params.phasing) {
@@ -193,7 +196,7 @@ workflow VARIANTPIPELINE {
         )
 
         asm_input = BAM_FILTERING.out.filtered_bam_bai
-        ch_versions = BAM_FILTERING.out.ch_versions
+        ch_versions = ch_versions.mix( BAM_FILTERING.out.ch_versions )
         // def asm_input = ch_bam_bai_haplotypes ?: samplesheet
 
         ASM (
@@ -207,7 +210,17 @@ workflow VARIANTPIPELINE {
             ch_versions
         )
 
-        ch_versions = ASM.out.ch_versions
+        ch_versions = ch_versions.mix( ASM.out.ch_versions )
+
+        HAPLOTYPES_BAM_STATS (
+            asm_input,
+            ch_reference,
+            ch_reads,
+            ch_intervals,
+            ch_versions
+        )
+
+        ch_multiqc_files = ch_multiqc_files.mix( HAPLOTYPES_BAM_STATS.out.samtools_report.map { _meta, txt -> txt } )
     }
 
     //
@@ -267,10 +280,12 @@ workflow VARIANTPIPELINE {
             bam_bai,
             ch_reference,
             ch_reads,
-            ch_intervals
+            ch_intervals,
+            ch_versions
         )
 
         ch_multiqc_files = ch_multiqc_files.mix( BAM_STATS.out.nanostat_report.map { _meta, txt -> txt } )
+        ch_multiqc_files = ch_multiqc_files.mix( BAM_STATS.out.samtools_report.map { _meta, txt -> txt } )
         
         ch_versions = ch_versions.mix( BAM_STATS.out.versions )
     }

@@ -92,5 +92,6 @@ workflow PHASING {
     phased_vcf  = WHATSHAP_PHASE.out.vcf
     haplotagged_bam_bai = hap_bam_bai
     ch_bam_bai_haplotypes = ch_bam_bai_haplotypes
+    whatshap_stats_report = WHATSHAP_STATS.out.log
     ch_versions = ch_versions
 }
