@@ -96,8 +96,19 @@ workflow VARIANTPIPELINE {
         bam_bai = BASECALLING.out.bam_bai
         ch_versions = BASECALLING.out.ch_versions
     }
-    else if (params.step == 'variant_calling' || params.step == 'phasing') {
-        bam_bai = samplesheet
+    else if (params.step == 'variant_calling') {
+            bam_bai = samplesheet
+    }
+    else if (params.step == 'phasing') {
+        def phasing_inputs = samplesheet.multiMap { meta, bam, bai, vcf, tbi ->
+            bam_bai_ch: [ meta, bam, bai ]
+            vcf_ch:     [ meta, vcf ]
+            tbi_ch:     [ meta, tbi ]
+        }
+        
+        bam_bai       = phasing_inputs.bam_bai_ch
+        final_snv_vcf = phasing_inputs.vcf_ch
+        final_snv_tbi = phasing_inputs.tbi_ch
     }
     else if (params.step == 'snv_annotation') {
         merged_vcf = samplesheet
@@ -143,7 +154,7 @@ workflow VARIANTPIPELINE {
         ch_snv_vcf_gz_tbi = MERGE_SNV_CALLING.out.final_vcf_gz
             .join(MERGE_SNV_CALLING.out.final_tbi)
 
-    } else if (params.step == 'phasing' || params.step == 'snv_annotation') {
+    } else if (params.step == 'snv_annotation') {
         final_snv_vcf = samplesheet.map { meta, vcf, _tbi -> [meta, vcf] }
         final_snv_tbi = samplesheet.map { meta, _vcf, tbi -> [meta, tbi] }
     }
@@ -177,10 +188,12 @@ workflow VARIANTPIPELINE {
             ch_bam_bai_haplotypes,
             ch_reference,
             ch_reads,
-            ch_intervals
+            ch_intervals,
+            ch_versions
         )
 
         asm_input = BAM_FILTERING.out.filtered_bam_bai
+        ch_versions = BAM_FILTERING.out.ch_versions
         // def asm_input = ch_bam_bai_haplotypes ?: samplesheet
 
         ASM (
