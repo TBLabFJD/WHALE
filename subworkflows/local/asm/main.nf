@@ -1,3 +1,4 @@
+include { SAMTOOLS_VIEW                } from '../../../modules/nf-core/samtools/view'
 include { MODKIT_PILEUP                } from '../../../modules/nf-core/modkit/pileup'
 include { TABIX_TABIX as TABIX_TABIX_1 } from '../../../modules/nf-core/tabix/tabix'
 include { TABIX_BGZIP as TABIX_BGZIP_1 } from '../../../modules/nf-core/tabix/bgzip'
@@ -23,6 +24,7 @@ workflow ASM {
     ch_bam_bai_haplotypes
     ch_reference
     chrom_sizes
+    ch_reads
     ch_intervals
     ch_haplotagged_bam_bai
     ch_gtf_tbi
@@ -31,8 +33,20 @@ workflow ASM {
 
     main:
 
+    SAMTOOLS_VIEW (     // removal of secondary and supplementary alignments
+        ch_bam_bai_haplotypes,
+        ch_reference,
+        ch_reads,
+        ch_intervals,
+        "bai"
+    )
+
+    ch_versions = ch_versions.mix(SAMTOOLS_VIEW.out.versions_samtools.first())
+
+    filtered_bams_bais = SAMTOOLS_VIEW.out.bam.join(SAMTOOLS_VIEW.out.bai)
+
     MODKIT_PILEUP ( 
-        ch_bam_bai_haplotypes, 
+        filtered_bams_bais, 
         ch_reference,
         ch_intervals
     )
