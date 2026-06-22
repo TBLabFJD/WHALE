@@ -61,9 +61,50 @@
                 "exists": true,
                 "pattern": "^\\S+\\.pod5$",
                 "errorMessage": "POD5 file cannot contain spaces and must have extension '.pod5'"
+            },
+            "haplotagged_bam": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.bam$",
+                "errorMessage": "Haplotagged BAM file cannot contain spaces and must have extension '.bam'"
+            },
+            "haplotagged_bai": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.bai$",
+                "errorMessage": "Haplotagged BAI index file cannot contain spaces and must have extension '.bai'"
+            },
+            "bam_h1": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.bam$",
+                "errorMessage": "H1 BAM file cannot contain spaces and must have extension '.bam'"
+            },
+            "bai_h1": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.bai$",
+                "errorMessage": "H1 BAI index file cannot contain spaces and must have extension '.bai'"
+            },
+            "bam_h2": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.bam$",
+                "errorMessage": "H2 BAM file cannot contain spaces and must have extension '.bam'"
+            },
+            "bai_h2": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.bai$",
+                "errorMessage": "H2 BAI index file cannot contain spaces and must have extension '.bai'"
             }
         },
-        
         "required": ["sample"]
     }
 }
