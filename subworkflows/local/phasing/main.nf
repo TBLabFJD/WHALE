@@ -81,17 +81,16 @@ workflow PHASING {
 
     ch_bam_bai_haplotypes = ch_bams_to_index.join(SAMTOOLS_INDEX_2.out.bai)
 
-    WHATSHAP_STATS (
+/*     WHATSHAP_STATS (
         WHATSHAP_PHASE.out.vcf,
         true,
         true,
         true
-    )
+    ) */
 
     emit:
     phased_vcf  = WHATSHAP_PHASE.out.vcf
     haplotagged_bam_bai = hap_bam_bai
     ch_bam_bai_haplotypes = ch_bam_bai_haplotypes
-    whatshap_stats_report = WHATSHAP_STATS.out.log
     ch_versions = ch_versions
 }
