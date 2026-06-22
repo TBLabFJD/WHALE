@@ -46,7 +46,11 @@ workflow VARIANTPIPELINE {
     ch_versions = channel.empty()
     ch_multiqc_files = channel.empty()
 
-    def bam_bai = channel.empty()
+    def bam_bai               = channel.empty()
+    def ch_bam_bai_haplotypes = channel.empty()
+    def haplotagged_bam_bai   = channel.empty()
+    def ch_snv_vcf_gz_tbi     = channel.empty()
+    def phased_vcf            = channel.empty()
 
     ch_reference = fasta.map { meta, fa -> [ meta, fa ] }
         .combine( fasta_fai.map { _meta, fai -> fai } )
@@ -118,7 +122,15 @@ workflow VARIANTPIPELINE {
         merged_final_bed = samplesheet
     }
     else if (params.step == 'asm') {
-        ch_bam_bai_haplotypes = samplesheet
+        def asm_inputs = samplesheet.multiMap { meta, haplotagged_bam, haplotagged_bai, bam_h1, bai_h1, bam_h2, bai_h2, vcf, tbi ->
+            haplotagged_bam_bai: [ meta, haplotagged_bam, haplotagged_bai ]
+            haplotypes_bam_bai: [ meta, bam_h1, bai_h1, bam_h2, bai_h2 ]
+            vcf_tbi: [meta, vcf, tbi ]
+        }
+
+        haplotagged_bam_bai = asm_inputs.haplotagged_bam_bai
+        ch_bam_bai_haplotypes  = asm_inputs.haplotypes_bam_bai
+        ch_snv_vcf_gz_tbi      = asm_inputs.vcf_tbi
     }
 
     //
@@ -179,13 +191,13 @@ workflow VARIANTPIPELINE {
 
         bam_bai = PHASING.out.haplotagged_bam_bai
         ch_bam_bai_haplotypes = PHASING.out.ch_bam_bai_haplotypes
-        ch_multiqc_files = ch_multiqc_files.mix( PHASING.out.whatshap_stats_report.map { _meta, txt -> txt } )
         ch_versions = ch_versions.mix( PHASING.out.ch_versions )
+        phased_vcf = PHASING.out.phased_vcf
     }
 
-    if (params.asm && !params.phasing) {
-        error "ERROR: You must perform phasing (--phasing true) if you want to run ASM (--asm true)"
-    } else if (params.asm && params.phasing) {
+    if ( params.asm && (params.phasing || params.step == 'asm') ) {
+        // we want to run asm subworkflow when phasing has been performed or when asm is the first step
+        def ch_asm_haplotagged_bam = params.step == 'asm' ? haplotagged_bam_bai : bam_bai
 
         ASM (
             ch_bam_bai_haplotypes,
@@ -193,23 +205,13 @@ workflow VARIANTPIPELINE {
             chrom_sizes,
             ch_reads,
             ch_intervals,
-            bam_bai, // haplotagged
+            ch_asm_haplotagged_bam,
             ch_gtf_tbi,
             ch_snv_vcf_gz_tbi,
             ch_versions
         )
 
         ch_versions = ch_versions.mix( ASM.out.ch_versions )
-
-        HAPLOTYPES_BAM_STATS (
-            ch_bam_bai_haplotypes,
-            ch_reference,
-            ch_reads,
-            ch_intervals,
-            ch_versions
-        )
-
-        ch_multiqc_files = ch_multiqc_files.mix( HAPLOTYPES_BAM_STATS.out.samtools_report.map { _meta, txt -> txt } )
     }
 
     //
@@ -263,20 +265,28 @@ workflow VARIANTPIPELINE {
     // BAM STATS
     //
 
-    if (bam_bai) {
+    if (params.run_bam_stats) {
+
+        bam_bai = bam_bai ?: channel.empty()
+        phased_vcf = phased_vcf ?: channel.empty()
+        ch_bam_bai_haplotypes = ch_bam_bai_haplotypes ?: channel.empty()
 
         BAM_STATS (
             bam_bai,
             ch_reference,
             ch_reads,
             ch_intervals,
+            phased_vcf,
+            ch_bam_bai_haplotypes,
             ch_versions
         )
 
         ch_multiqc_files = ch_multiqc_files.mix( BAM_STATS.out.nanostat_report.map { _meta, txt -> txt } )
         ch_multiqc_files = ch_multiqc_files.mix( BAM_STATS.out.samtools_report.map { _meta, txt -> txt } )
-        
-        ch_versions = ch_versions.mix( BAM_STATS.out.versions )
+        ch_multiqc_files = ch_multiqc_files.mix( BAM_STATS.out.samtools_report_haplotypes.map { _meta, txt -> txt } )
+        ch_multiqc_files = ch_multiqc_files.mix( BAM_STATS.out.whatshap_report.map { _meta, txt -> txt } )
+
+        ch_versions = ch_versions.mix( BAM_STATS.out.ch_versions )
     }
 
     //
