@@ -17,8 +17,7 @@ include { MERGE_SNV_CALLING      } from '../subworkflows/local/merge_snv_calling
 include { MERGE_SV_CALLING       } from '../subworkflows/local/merge_sv_calling'
 include { SNV_ANNOTATION         } from '../subworkflows/local/snv_annotation'
 include { SV_ANNOTATION          } from '../subworkflows/local/sv_annotation'
-include { BASECALLING            } from '../subworkflows/local/basecalling'  
-include { BAM_FILTERING          } from '../subworkflows/local/bam_filtering'
+include { BASECALLING            } from '../subworkflows/local/basecalling'
 include { PHASING                } from '../subworkflows/local/phasing'
 include { ASM                    } from '../subworkflows/local/asm'
 include { BAM_STATS              } from '../subworkflows/local/bam_stats'
@@ -186,23 +185,13 @@ workflow VARIANTPIPELINE {
 
     if (params.asm && !params.phasing) {
         error "ERROR: You must perform phasing (--phasing true) if you want to run ASM (--asm true)"
-    } else if (params.asm && params.phasing) {  
-        BAM_FILTERING (   
-            ch_bam_bai_haplotypes,
-            ch_reference,
-            ch_reads,
-            ch_intervals,
-            ch_versions
-        )
-
-        asm_input = BAM_FILTERING.out.filtered_bam_bai
-        ch_versions = ch_versions.mix( BAM_FILTERING.out.ch_versions )
-        // def asm_input = ch_bam_bai_haplotypes ?: samplesheet
+    } else if (params.asm && params.phasing) {
 
         ASM (
-            asm_input,
+            ch_bam_bai_haplotypes,
             ch_reference,
             chrom_sizes,
+            ch_reads,
             ch_intervals,
             bam_bai, // haplotagged
             ch_gtf_tbi,
@@ -213,7 +202,7 @@ workflow VARIANTPIPELINE {
         ch_versions = ch_versions.mix( ASM.out.ch_versions )
 
         HAPLOTYPES_BAM_STATS (
-            asm_input,
+            ch_bam_bai_haplotypes,
             ch_reference,
             ch_reads,
             ch_intervals,
