@@ -97,7 +97,8 @@ workflow PIPELINE_INITIALISATION {
                     return [ meta + [ data_type:'bed' ], bed ]
                 } else if (pod5) {
                     return [ meta + [ data_type:'pod5' ], pod5 ]
-                }
+                } else if (haplotagged_bam) { 
+                    return [ meta + [ data_type:'asm' ], haplotagged_bam, haplotagged_bai, bam_h1, bai_h1, bam_h2, bai_h2, vcf, tbi ]
         }
         .set { ch_samplesheet }
         //.groupTuple().view()
