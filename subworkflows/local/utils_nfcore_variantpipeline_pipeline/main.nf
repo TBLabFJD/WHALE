@@ -108,7 +108,6 @@ workflow PIPELINE_INITIALISATION {
         //    meta, files ->
         //        return [ meta, files.flatten() ]
         //}.view()
-        .set { ch_samplesheet }
 
     emit:
     samplesheet = ch_samplesheet
