@@ -59,6 +59,6 @@ output:
           type: eval
           description: The expression to obtain the version of the tool
 authors:
-  - "@Pablo10333"
+  - "@pablobarbosajimenez"
 maintainers:
-  - "@Pablo10333"
+  - "@pablobarbosajimenez"

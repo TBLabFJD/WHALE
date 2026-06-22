@@ -46,6 +46,6 @@ input:
       description: Index for reference file.
       pattern: "*.fai"
 authors:
-  - "@Pablo10333"
+  - "@pablobarbosajimenez"
 maintainers:
-  - "@Pablo10333"
+  - "@pablobarbosajimenez"
