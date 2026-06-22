@@ -1,0 +1,51 @@
+name: "modkit_dmr"
+description: Extraction of the differentially methylated regions (dmr) between two BED files
+keywords:
+  - modkit
+  - dmr
+tools:
+  - "modkit":
+      description: A bioinformatics tool for working with modified bases in Oxford
+        Nanopore sequencing data
+      homepage: https://github.com/nanoporetech/modkit
+      documentation: https://github.com/nanoporetech/modkit
+      tool_dev_url: https://github.com/nanoporetech/modkit
+      licence: ["Oxford Nanopore Technologies PLC. Public License Version 1.0"]
+      identifier: ""
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'sample_1' ]
+  - h1_bed:
+      type: file
+      description: Compressed BED file of the first sample or haplotype
+  - h1_tbi:
+      type: file
+      description: tbi file index of the first sample or haplotype compressed BED file
+      pattern: "*.tbi"
+  - h2_bed:
+      type: file
+      description: Compressed BED file of the second sample or haplotype
+  - h2_tbi:
+      type: file
+      description: tbi file index of the second sample or haplotype compressed BED file
+      pattern: "*.tbi"
+  - meta2:
+      type: map
+      description: |
+        Groovy Map containing sample information about the reference genome files
+        e.g. [ id:'hg38' ]
+  - fasta:
+      type: file
+      description: Reference file. Must be accompanied by .fai index
+      pattern: "*.{fasta,fa}"
+  - fai:
+      type: file
+      description: Index for reference file.
+      pattern: "*.fai"
+authors:
+  - "@pablobarbosajimenez"
+maintainers:
+  - "@pablobarbosajimenez"

@@ -83,8 +83,11 @@ workflow PIPELINE_INITIALISATION {
     Channel
         .fromSamplesheet("input")
         .map {
-            meta, fastq, bam, bai, vcf, bed ->
-                if (fastq) {
+            meta, fastq, bam, bai, vcf, tbi, bed, pod5, haplotagged_bam, haplotagged_bai, bam_h1, bai_h1, bam_h2, bai_h2 -> 
+                
+                if (bam && vcf) {
+                    return [ meta + [ data_type:'phasing_input' ], bam, bai, vcf, tbi ]
+                } else if (fastq) {
                     return [ meta + [ data_type:'fastq' ], fastq ]
                 } else if (bam) {
                     return [ meta + [ data_type:'bam' ], bam, bai ]
@@ -92,8 +95,13 @@ workflow PIPELINE_INITIALISATION {
                     return [ meta + [ data_type:'vcf' ], vcf ]
                 } else if (bed) {
                     return [ meta + [ data_type:'bed' ], bed ]
+                } else if (pod5) {
+                    return [ meta + [ data_type:'pod5' ], pod5 ]
+                } else if (haplotagged_bam) { 
+                    return [ meta + [ data_type:'asm' ], haplotagged_bam, haplotagged_bai, bam_h1, bai_h1, bam_h2, bai_h2, vcf, tbi ]
                 }
         }
+        .set { ch_samplesheet }
         //.groupTuple().view()
         //.map {
         //    validateInputSamplesheet(it)
@@ -102,7 +110,6 @@ workflow PIPELINE_INITIALISATION {
         //    meta, files ->
         //        return [ meta, files.flatten() ]
         //}.view()
-        .set { ch_samplesheet }
 
     emit:
     samplesheet = ch_samplesheet

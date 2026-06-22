@@ -1,0 +1,69 @@
+name: "dmr_ccre"
+description: Intersects Differentially Methylated Regions (DMRs) with candidate cis-Regulatory Elements (cCREs) such as promoters and enhancers to identify regulatory overlaps
+keywords:
+  - intersection
+  - ccre
+  - promoters
+  - enhancers
+  - dmr
+  - bedtools
+  - epigenetics
+tools:
+  - "bedtools":
+      description: "A powerful toolset for genome arithmetic."
+      homepage: "https://bedtools.readthedocs.io/"
+      documentation: "https://bedtools.readthedocs.io/"
+      tool_dev_url: "https://github.com/arq5x/bedtools2"
+      doi: "10.1093/bioinformatics/btq033"
+      licence: ["MIT"]
+      identifier: biotools:bedtools
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'sample_1' ]
+  - bed:
+      type: file
+      description: BED file containing the differentially methylated regions (DMRs)
+      pattern: "*.bed"
+  - meta2:
+      type: map
+      description: |
+        Groovy Map containing reference assembly information for the promoters file
+        e.g. [ id:'hg38' ]
+  - promoters_bed:
+      type: file
+      description: Reference BED file containing promoter regions
+      pattern: "*.bed"
+  - meta3:
+      type: map
+      description: |
+        Groovy Map containing reference assembly information for the enhancers file
+        e.g. [ id:'hg38' ]
+  - enhancers_bed:
+      type: file
+      description: Reference BED file containing enhancer regions
+      pattern: "*.bed"
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'sample_1' ]
+  - promoters_bed:
+      type: file
+      description: BED file containing DMRs that overlap with promoter regions
+      pattern: "*_overlapped_promoters.bed"
+  - enhancers_bed:
+      type: file
+      description: BED file containing DMRs that overlap with enhancer regions
+      pattern: "*_overlapped_enhancers.bed"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@pablobarbosajimenez"
+maintainers:
+  - "@pablobarbosajimenez"

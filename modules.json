@@ -60,14 +60,60 @@
                         "git_sha": "285a50500f9e02578d90b3ce6382ea3c30216acd",
                         "installed_by": ["modules"]
                     },
+                    "gtfsort": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["modules"]
+                    },
                     "minimap2/align": {
                         "branch": "master",
                         "git_sha": "e83b347b3e674de6bb1bb7bdf9b2674768c8e0fe",
                         "installed_by": ["modules"]
                     },
+                    "modkit/bedmethyltobigwig": {
+                        "branch": "master",
+                        "git_sha": "3d81317a30d1016b533982d6b84df07713ae520a",
+                        "installed_by": ["modules"]
+                    },
+                    "modkit/pileup": {
+                        "branch": "master",
+                        "git_sha": "3d81317a30d1016b533982d6b84df07713ae520a",
+                        "installed_by": ["modules"]
+                    },
                     "multiqc": {
                         "branch": "master",
                         "git_sha": "b7ebe95761cd389603f9cc0e0dc384c0f663815a",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/coverage": {
+                        "branch": "master",
+                        "git_sha": "54d9a8659816764fc144e6f7fba1679f57328153",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/index": {
+                        "branch": "master",
+                        "git_sha": "1d2fbdcbca677bbe8da0f9d0d2bb7c02f2cab1c9",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/markdup": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/merge": {
+                        "branch": "master",
+                        "git_sha": "44b7dad0181c7a0495f6d128d8cbf55feb277a84",
+                        "installed_by": ["modules"],
+                        "patch": "modules/nf-core/samtools/merge/samtools-merge.diff"
+                    },
+                    "samtools/sort": {
+                        "branch": "master",
+                        "git_sha": "156feda0cb6589cd29c04902004fa3b53bc00205",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/view": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
                         "installed_by": ["modules"]
                     },
                     "sniffles": {
@@ -83,6 +129,31 @@
                     "tabix/tabix": {
                         "branch": "master",
                         "git_sha": "964d13ef113ef654e2c7fe4530884b8927e2c25c",
+                        "installed_by": ["modules"]
+                    },
+                    "ucsc/bedgraphtobigwig": {
+                        "branch": "master",
+                        "git_sha": "b1c64e862fb5ed7f13b6f8f3ef8f04e700d41438",
+                        "installed_by": ["modules"]
+                    },
+                    "ucsc/liftover": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["modules"]
+                    },
+                    "whatshap/haplotag": {
+                        "branch": "master",
+                        "git_sha": "338fb5f53d9901c150e9b561b3be59324c05798f",
+                        "installed_by": ["modules"]
+                    },
+                    "whatshap/phase": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["modules"]
+                    },
+                    "whatshap/stats": {
+                        "branch": "master",
+                        "git_sha": "bfab71f4d68c1aaff09335a3433e7b2836918b2a",
                         "installed_by": ["modules"]
                     }
                 }

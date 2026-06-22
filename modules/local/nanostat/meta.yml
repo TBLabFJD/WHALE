@@ -1,0 +1,45 @@
+name: "nanostat"
+description: Calculates various statistics from a long-read sequencing dataset (BAM format)
+keywords:
+  - statistics
+  - quality control
+  - qc
+  - long-reads
+  - ont
+  - bam
+tools:
+  - "nanostat":
+      description: "Calculate various statistics from a long read sequencing dataset"
+      homepage: "https://github.com/wdecoster/nanostat"
+      documentation: "https://github.com/wdecoster/nanostat"
+      tool_dev_url: "https://github.com/wdecoster/nanostat"
+      doi: "10.1093/bioinformatics/bty149"
+      licence: ["GPL-3.0"]
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'sample_1' ]
+  - bam:
+      type: file
+      description: BAM file containing long-read alignments
+      pattern: "*.bam"
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'sample_1' ]
+  - report:
+      type: file
+      description: Text file containing summary statistics (read lengths, qualities, etc.)
+      pattern: "*_bam_report.txt"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@pablobarbosajimenez"
+maintainers:
+  - "@pablobarbosajimenez"

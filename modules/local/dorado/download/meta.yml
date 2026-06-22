@@ -1,0 +1,43 @@
+name: "dorado_download"
+description: Downloading of the Dorado basecalling and/or alignment model
+keywords:
+  - downloading
+  - dorado
+  - basecalling
+  - model
+tools:
+  - "dorado":
+      description: "High-performance basecaller, alignment, and analysis engine for Oxford Nanopore reads"
+      homepage: "https://github.com/nanoporetech/dorado"
+      documentation: "https://github.com/nanoporetech/dorado"
+      tool_dev_url: "https://github.com/nanoporetech/dorado"
+      doi: "" 
+      licence: ["MPL-2.0"]
+      identifier: ""
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing model information
+        e.g. [ id:'hac' ]
+  - dorado_model:
+      type: val
+      description: Name of the Dorado model to be downloaded (e.g., 'dna_r10.4.1_e8.2_400bps_hac@v4.3.0')
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing model information
+        e.g. [ id:'hac' ]
+  - model:
+      type: directory
+      description: Directory containing the downloaded Dorado model files
+      pattern: "*"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@pablobarbosajimenez"
+maintainers:
+  - "@pablobarbosajimenez"

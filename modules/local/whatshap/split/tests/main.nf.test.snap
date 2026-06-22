@@ -1,0 +1,81 @@
+{
+    "whatshap split - global bam - tsv --> h1 - h2 - unassigned": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test_sample",
+                            "single_end": false
+                        },
+                        "test_sample_h1.bam:md5,4c5715dbd0efd9d308afc294434e459a"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test_sample",
+                            "single_end": false
+                        },
+                        "test_sample_h2.bam:md5,1d3935eb30b5519bf4b2e638b691c95f"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "test_sample",
+                            "single_end": false
+                        },
+                        "test_sample_unassigned.bam:md5,e3ce1238773a0efcb883da594676ba38"
+                    ]
+                ],
+                "3": [
+                    [
+                        "WHATSHAP_SPLIT",
+                        "whatshap",
+                        "2.8"
+                    ]
+                ],
+                "bam_h1": [
+                    [
+                        {
+                            "id": "test_sample",
+                            "single_end": false
+                        },
+                        "test_sample_h1.bam:md5,4c5715dbd0efd9d308afc294434e459a"
+                    ]
+                ],
+                "bam_h2": [
+                    [
+                        {
+                            "id": "test_sample",
+                            "single_end": false
+                        },
+                        "test_sample_h2.bam:md5,1d3935eb30b5519bf4b2e638b691c95f"
+                    ]
+                ],
+                "bam_unassigned": [
+                    [
+                        {
+                            "id": "test_sample",
+                            "single_end": false
+                        },
+                        "test_sample_unassigned.bam:md5,e3ce1238773a0efcb883da594676ba38"
+                    ]
+                ],
+                "versions_whatshap": [
+                    [
+                        "WHATSHAP_SPLIT",
+                        "whatshap",
+                        "2.8"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-05-06T10:56:07.653502009"
+    }
+}

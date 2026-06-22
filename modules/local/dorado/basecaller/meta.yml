@@ -1,0 +1,75 @@
+name: "modkit_dmr"
+description: Identifies Differentially Modified Regions (DMRs) between two bedMethyl files (e.g., phased haplotypes) using Modkit.
+keywords:
+  - modkit
+  - dmr
+  - methylation
+  - epigenetics
+  - ont
+  - nanopore
+  - bedmethyl
+tools:
+  - "modkit":
+      description: "A high-performance toolkit for working with modified bases from Oxford Nanopore reads."
+      homepage: "https://nanoporetech.github.io/modkit/"
+      documentation: "https://nanoporetech.github.io/modkit/"
+      tool_dev_url: "https://github.com/nanoporetech/modkit"
+      doi: "" 
+      licence: ["MPL-2.0"]
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - h1_bed:
+      type: file
+      description: bedMethyl file containing methylation calls for the first condition or haplotype (H1). Must be bgzipped
+      pattern: "*.bed.gz"
+  - h1_tbi:
+      type: file
+      description: Tabix index for the H1 bedMethyl file.
+      pattern: "*.bed.gz.tbi"
+  - h2_bed:
+      type: file
+      description: bedMethyl file containing methylation calls for the second condition or haplotype (H2). Must be bgzipped
+      pattern: "*.bed.gz"
+  - h2_tbi:
+      type: file
+      description: Tabix index for the H2 bedMethyl file
+      pattern: "*.bed.gz.tbi"
+  - meta2:
+      type: map
+      description: |
+        Groovy Map containing reference genome information
+        e.g. [ id:'hg38' ]
+  - fasta:
+      type: file
+      description: Reference genome FASTA file
+      pattern: "*.{fasta,fa}"
+  - fai:
+      type: file
+      description: Index for the reference FASTA file
+      pattern: "*.fai"
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - regions_bed:
+      type: file
+      description: BED file containing the differentially modified regions evaluated by modkit
+      pattern: "*.bed"
+  - differences_bed:
+      type: file
+      description: BED file containing the specific segments and methylation differences between the pairs
+      pattern: "*_differences.bed"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@pablobarbosajimenez"
+maintainers:
+  - "@pablobarbosajimenez"

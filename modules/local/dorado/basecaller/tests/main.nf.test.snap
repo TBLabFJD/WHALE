@@ -1,0 +1,35 @@
+{
+    "dorado_basecaller - pod5": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test_sample"
+                        },
+                        "test_sample_basecall.bam:md5,bf1b7d55dd9b8e6edcdd1a5571ba49a8"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,dcf16d12f67766a9fc7fc53a50b34284"
+                ],
+                "bam": [
+                    [
+                        {
+                            "id": "test_sample"
+                        },
+                        "test_sample_basecall.bam:md5,bf1b7d55dd9b8e6edcdd1a5571ba49a8"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,dcf16d12f67766a9fc7fc53a50b34284"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-05-05T14:50:13.937781689"
+    }
+}

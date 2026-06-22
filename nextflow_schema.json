@@ -1,5 +1,5 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
+    "$schema": "https://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/variantpipeline/master/nextflow_schema.json",
     "title": "nf-core/variantpipeline pipeline parameters",
     "description": "variant calling pipeline",
@@ -28,6 +28,16 @@
                     "format": "directory-path",
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open"
+                },
+                "reads": {
+                    "type": "string",
+                    "description": "Read names to be extracted and used by the analysis",
+                    "fa_icon": "fas fa-file-code"
+                },
+                "intervals": {
+                    "type": "string",
+                    "description": "Coordinates of target intervals (e.g. BED file) to restrict analysis.",
+                    "fa_icon": "fas fa-align-justify"
                 },
                 "email": {
                     "type": "string",
@@ -88,6 +98,20 @@
                 "assembly": {
                     "type": "string",
                     "description": "Genome assembly."
+                },
+                "chrom_sizes": {
+                    "type": "string",
+                    "description": "Path to chromosome sizes file."
+                },
+                "gtf_gz": {
+                    "type": "string",
+                    "description": "Path to bgzipped GTF/GFF file for gene annotations.",
+                    "fa_icon": "fas fa-file-code"
+                },
+                "gtf_tbi": {
+                    "type": "string",
+                    "description": "Path to Tabix index of the bgzipped GTF/GFF file.",
+                    "fa_icon": "fas fa-file-code"
                 }
             }
         },
@@ -380,6 +404,47 @@
                 }
             }
         },
+        "asm_options": {
+            "title": "Allele-Specific Methylation (ASM) Options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Parameters for the ASM downstream analysis.",
+            "properties": {
+                "asm": {
+                    "type": "boolean",
+                    "description": "Enable Allele-Specific Methylation workflow."
+                },
+                "promoters_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to the BED file containing promoter coordinates."
+                },
+                "enhancers_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to the BED file containing enhancer coordinates."
+                }
+            }
+        },
+        "methylartist_options": {
+            "title": "Methylartist Options",
+            "type": "object",
+            "fa_icon": "fas fa-chart-bar",
+            "description": "Options for locus-specific methylation visualization.",
+            "properties": {
+                "methylartist_enabled": {
+                    "type": "boolean",
+                    "description": "Enable the Methylartist plotting workflow.",
+                    "default": false,
+                    "fa_icon": "fas fa-toggle-on"
+                },
+                "methylartist_intervals": {
+                    "type": "string",
+                    "description": "Comma-separated string or list of genomic intervals to plot (e.g. 'chr1:1000-2000,chr2:5000-6000').",
+                    "fa_icon": "fas fa-ruler-horizontal"
+                }
+            }
+        },
         "singularity_images": {
             "title": "Singularity images",
             "type": "object",
@@ -611,6 +676,12 @@
             "$ref": "#/definitions/annotation_of_svs"
         },
         {
+            "$ref": "#/definitions/asm_options"
+        },
+        {
+            "$ref": "#/definitions/methylartist_options"
+        },
+        {
             "$ref": "#/definitions/singularity_images"
         },
         {
@@ -622,5 +693,23 @@
         {
             "$ref": "#/definitions/generic_options"
         }
-    ]
+    ],
+    "properties": {
+        "device": {
+            "type": "string",
+            "default": "cpu"
+        },
+        "dorado_model": {
+            "type": "string",
+            "default": "dna_r10.4.1_e8.2_400bps_hac@v5.2.0"
+        },
+        "dorado_models_dir": {
+            "type": "string",
+            "default": "../dorado_models/"
+        },
+        "phasing": {
+            "type": "boolean",
+            "default": false
+        }
+    }
 }

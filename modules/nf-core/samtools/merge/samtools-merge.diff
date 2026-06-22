@@ -1,0 +1,20 @@
+Changes in component 'nf-core/samtools/merge'
+'modules/nf-core/samtools/merge/environment.yml' is unchanged
+Changes in 'samtools/merge/main.nf':
+--- modules/nf-core/samtools/merge/main.nf
++++ modules/nf-core/samtools/merge/main.nf
+@@ -8,7 +8,7 @@
+         : 'community.wave.seqera.io/library/htslib_samtools:1.23--cde2c40a51d6f752'}"
+ 
+     input:
+-    tuple val(meta), path(input_files, stageAs: "?/*"), path(index_files, stageAs: "?/*")
++    tuple val(meta), path(input_files, stageAs: "?/*")
+     tuple val(meta2), path(fasta), path(fai), path(gzi)
+ 
+     output:
+
+'modules/nf-core/samtools/merge/meta.yml' is unchanged
+'modules/nf-core/samtools/merge/tests/main.nf.test' is unchanged
+'modules/nf-core/samtools/merge/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/samtools/merge/tests/nextflow.config' is unchanged
+************************************************************
