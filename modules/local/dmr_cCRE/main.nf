@@ -2,9 +2,8 @@ process DMR_cCRE {
     tag "$meta.id"
     label 'process_medium'
 
-
-    container "oras://community.wave.seqera.io/library/bedtools:2.27.1--d5d82fb70c52c058"
-
+    container "https://depot.galaxyproject.org/singularity/bedtools:2.27.1--he513fc3_4"
+    
     input:
     tuple val(meta), path(bed)
     tuple val(meta2), path(promoters_bed)
