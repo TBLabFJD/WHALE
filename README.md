@@ -94,6 +94,11 @@ nextflow run WHALE \
 - multiqc
 - pipeline_info
 
+**Main Developer**
+- [Rafael Farias Varona](https://github.com/RafaFariasVarona)
+- [Pablo Barbosa Jiménez](https://github.com/pablobarbosajimenez)
+- [Yolanda Benítez Quesada](https://github.com/yolandabq)
+
 ## Citations
 
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
