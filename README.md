@@ -9,7 +9,7 @@
 **WHALE** is a bioinformatics pipeline based on Nextflow and nf-core for long-read DNA sequencing analysis. It takes a samplesheet as input and performs quality control, alignment, variant calling and annotation.
 
 <p align="center">
-  <img src="docs/images/esquema_general.png">
+  <img src="docs/images/workflow_whale.png">
 </p>
 
 ## Pipeline summary
